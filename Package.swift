@@ -4,5 +4,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "vsl"
+    name: "vsl",
+    products: [
+        .library(name: "vsl", targets: ["vsl"])
+    ],
+    targets: [
+        .target(name: "vsl", dependencies: [])
+    ],
+    cxxLanguageStandard: .cxx20
 )
