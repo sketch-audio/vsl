@@ -277,6 +277,20 @@ force_inline constexpr auto pow(X x, X y) -> X
     }
 }
 
+template<typename X, bool Cxm = false>
+force_inline constexpr auto sqrt(X x) -> X
+{
+    if constexpr (Cxm) {
+        static_assert(deferred_false_v<X>, "cxm sqrt not implemented yet");
+    }
+    else if constexpr (is_vector_v<X>) {
+        return simd::sqrt(x);
+    }
+    else {
+        return std::sqrt(x);
+    }
+}
+
 template<typename X, typename C, bool Cxm = false>
 force_inline constexpr auto min(X a, C b) -> X
 {
