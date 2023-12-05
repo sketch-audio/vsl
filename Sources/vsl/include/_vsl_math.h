@@ -95,6 +95,18 @@ force_inline constexpr auto fmod(X x, X y) -> X
     }
 }
 
+template<typename X>
+force_inline constexpr auto wrap(X x) -> X
+{
+    return cxm::wrap(x);
+}
+
+template<typename X, typename B>
+force_inline constexpr auto wrap(X x, B a, B b) -> X
+{
+    return cxm::wrap(x, a, b);
+}
+
 template<typename X, bool Cxm = false, bool Wrap = true>
 force_inline constexpr auto cos(X x) -> X
 {
