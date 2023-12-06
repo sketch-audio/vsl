@@ -165,6 +165,46 @@ force_inline constexpr auto unsigned_to_float(X x)
     }
 }
 
+/**
+ 
+ */
+template<typename X>
+force_inline auto mask_to_bool(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        return x;
+    }
+    else {
+        return x == -1;
+    }
+}
+
+/**
+ 
+ */
+template<typename X>
+force_inline auto bool_to_mask(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        return x;
+    }
+    else {
+        return x ? -1 : 0;
+    }
+}
+
+/**
+ 
+ */
+template<FloatingPoint X>
+force_inline auto mask_for_lane(size_t i) -> mask_t<X>
+{
+    static_assert(is_vector_v<X>, "Can't use mask_for_lane in scalar code.");
+    auto mask = mask_t<X>(0);
+    mask[i] = -1;
+    return mask;
+}
+
 } // namespace vsl
 
 #endif /* _vsl_utils_h */
