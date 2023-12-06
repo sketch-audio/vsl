@@ -1,1 +1,3 @@
 .swiftpm/
+.vscode/
+tests

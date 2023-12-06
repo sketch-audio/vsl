@@ -107,11 +107,11 @@ force_inline constexpr auto wrap(X x, B a, B b) -> X
     return cxm::wrap(x, a, b);
 }
 
-template<typename X, bool Cxm = false, bool Wrap = true>
+template<typename X, bool Cxm = false>
 force_inline constexpr auto cos(X x) -> X
 {
     if constexpr (Cxm) {
-        return cxm::cos<X, Wrap>(x);
+        return cxm::cos(x);
     }
     else if constexpr (is_vector_v<X>) {
         return simd::cos(x);
@@ -121,11 +121,11 @@ force_inline constexpr auto cos(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false, bool Wrap = true>
+template<typename X, bool Cxm = false>
 force_inline constexpr auto sin(X x) -> X
 {
     if constexpr (Cxm) {
-        return cxm::sin<X, Wrap>(x);
+        return cxm::sin(x);
     }
     else if constexpr (is_vector_v<X>) {
         return simd::sin(x);
@@ -135,11 +135,11 @@ force_inline constexpr auto sin(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false, bool Wrap = true>
+template<typename X, bool Cxm = false>
 force_inline constexpr auto tan(X x) -> X
 {
     if constexpr (Cxm) {
-        return cxm::tan<X, Wrap>(x);
+        return cxm::tan(x);
     }
     else if constexpr (is_vector_v<X>) {
         return simd::tan(x);

@@ -5,7 +5,7 @@
 #include <numbers>
 
 #include "_vsl_core.h"
-#include "_vsl_utils.h" // select, counterpart_cast
+#include "_vsl_utils.h" // select, etc.
 
 namespace vsl {
 namespace cxm {
@@ -23,8 +23,15 @@ force_inline constexpr auto abs(X x) -> X
     return select(x >= 0, x, -x);
 }
 
-static_assert(abs(2.f) == 2.f);
+static_assert(abs(-1) == 1);
+static_assert(abs(0) == 0);
+static_assert(abs(2) == 2);
 static_assert(abs(-1.f) == 1.f);
+static_assert(abs(0.f) == 0.f);
+static_assert(abs(2.f) == 2.f);
+static_assert(abs(-1.0) == 1.0);
+static_assert(abs(0.0) == 0.0);
+static_assert(abs(2.0) == 2.0);
 
 /**
  * @brief trunc
@@ -39,11 +46,11 @@ force_inline constexpr auto trunc(X x) -> X
     using S = scalar_t<X>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
     constexpr auto one = decltype(sig_bits){1};
-    constexpr auto thresh = (one << sig_bits); // Values >= thresh are integers.
+    constexpr auto thresh = (one << sig_bits); // Values >= thresh are integers. For a float, this is 8388608.f
 
     // These casts are OK because sig_bits < the number of bits in our integer counterpart.
     if constexpr (is_vector_v<X>) {
-        return select(cxm::abs(x) >= thresh, x, counterpart_cast(counterpart_cast(x)));
+        return select(cxm::abs(x) >= thresh, x, signed_to_float(float_to_signed(x)));
     }
     else {
         using I = int_t<X>;
@@ -53,8 +60,14 @@ force_inline constexpr auto trunc(X x) -> X
 
 static_assert(trunc(0.f) == 0.f);
 static_assert(trunc(3.621f) == 3.f);
+static_assert(trunc(5.f) == 5.f);
 static_assert(trunc(-1.2f) == -1.f);
 static_assert(trunc(1e20f) == 1e20f);
+static_assert(trunc(0.0) == 0.0);
+static_assert(trunc(3.621) == 3.0);
+static_assert(trunc(5.0) == 5.0);
+static_assert(trunc(-1.2) == -1.0);
+static_assert(trunc(1e20) == 1e20);
 
 /**
  * @brief floor
@@ -113,29 +126,16 @@ static_assert(round(-1.5f) == -1.f);
 static_assert(round(-2.9) == -3.0);
 
 /**
- * @brief "expand" integral type to a same-sized floating-point type (basically a static_cast)
- *
- * @tparam X
- * @param x
- * @return float_t<X>
- */
-template<Integral X>
-force_inline constexpr auto expand_to_float(X x) -> float_t<X>
-{
-    return counterpart_cast(x);
-}
-
-/**
- * @brief ceil a floating-point type to a same-sized integral type
+ * @brief trunc a floating-point type to a same-sized integral type
  *
  * @tparam X
  * @param x
  * @return int_t<X>
  */
 template<FloatingPoint X>
-force_inline constexpr auto ceil_to_int(X x) -> int_t<X>
+force_inline constexpr auto trunc_to_int(X x) -> int_t<X>
 {
-    return counterpart_cast(cxm::ceil(x));
+    return float_to_signed(cxm::trunc(x));
 }
 
 /**
@@ -148,7 +148,20 @@ force_inline constexpr auto ceil_to_int(X x) -> int_t<X>
 template<FloatingPoint X>
 force_inline constexpr auto floor_to_int(X x) -> int_t<X>
 {
-    return counterpart_cast(cxm::floor(x));
+    return float_to_signed(cxm::floor(x));
+}
+
+/**
+ * @brief ceil a floating-point type to a same-sized integral type
+ *
+ * @tparam X
+ * @param x
+ * @return int_t<X>
+ */
+template<FloatingPoint X>
+force_inline constexpr auto ceil_to_int(X x) -> int_t<X>
+{
+    return float_to_signed(cxm::ceil(x));
 }
 
 /**
@@ -161,20 +174,7 @@ force_inline constexpr auto floor_to_int(X x) -> int_t<X>
 template<FloatingPoint X>
 force_inline constexpr auto round_to_int(X x) -> int_t<X>
 {
-    return counterpart_cast(cxm::round(x));
-}
-
-/**
- * @brief trunc a floating-point type to a same-sized integral type
- *
- * @tparam X
- * @param x
- * @return int_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto trunc_to_int(X x) -> int_t<X>
-{
-    return counterpart_cast(cxm::trunc(x));
+    return float_to_signed(cxm::round(x));
 }
 
 /**
@@ -182,26 +182,26 @@ force_inline constexpr auto trunc_to_int(X x) -> int_t<X>
  *
  * @tparam X
  * @param x
- * @return float_t<X>
+ * @return auto (a floating-point type)
  */
-template<Integral X>
-force_inline constexpr auto reinterpret_as_float(X x) -> float_t<X>
+template<Unsigned X>
+force_inline constexpr auto reinterpret_as_float(X x)
 {
-    using F = counterpart_t<X>;
+    using F = unsigned_counterpart_t<X>;
     return std::bit_cast<F>(x);
 }
 
 /**
- * @brief reinterpret a floating-point type as the same-sized integral type
+ * @brief reinterpret a floating-point type as the same-sized (unsigned) integral type
  *
  * @tparam X
  * @param x
- * @return int_t<X>
+ * @return uint_t<X>
  */
 template<FloatingPoint X>
-force_inline constexpr auto reinterpret_as_int(X x) -> int_t<X>
+force_inline constexpr auto reinterpret_as_int(X x) -> uint_t<X>
 {
-    using I = counterpart_t<X>;
+    using I = unsigned_counterpart_t<X>;
     return std::bit_cast<I>(x);
 }
 
@@ -212,16 +212,18 @@ force_inline constexpr auto reinterpret_as_int(X x) -> int_t<X>
  * @param a
  * @param b
  * @param thr
- * @return mask_t<X>
+ * @return auto (bool in scalar case, mask_t in vector case)
  */
 template<typename X>
-force_inline constexpr auto about_equal(X a, X b, X tol = 1e-6f) -> mask_t<X>
+force_inline constexpr auto about_equal(X a, X b, X tol = 1e-6f)
 {
     return cxm::abs(a - b) < tol;
 }
 
 static_assert(about_equal(1.f, 1 + 1e-7f));
 static_assert(about_equal(1.f, 1 + 1e-5f) == false);
+static_assert(about_equal(1.0, 1 + 1e-7));
+static_assert(about_equal(1.0, 1 + 1e-5) == false);
 
 /**
  * @brief fmod
@@ -278,36 +280,30 @@ static_assert([]() {
     // -pi should wrap to pi on 0..<2 * pi
     constexpr auto pi = std::numbers::pi_v<float>;
     return about_equal(wrap(-pi, 0.f, 2 * pi), pi);
-    }());
+}());
 
 static_assert([]() {
     // 2 * pi should wrap to 0 on -pi..<pi
     constexpr auto pi = std::numbers::pi_v<float>;
     return about_equal(wrap(2 * pi, -pi, pi), 0.f);
-    }());
+}());
 
 static_assert([]() {
     // 5 * pi should wrap to pi on 0..<2 * pi
     constexpr auto pi = std::numbers::pi_v<float>;
     return about_equal(wrap(5 * pi, 0.f, 2 * pi), pi);
-    }());
+}());
 
 /**
- * @brief cos (approx)
+ * @brief cos (approx on -pi...pi)
  *
  * @tparam X
  * @param x
  * @return X
  */
-template<typename X, bool Wrap = false>
+template<typename X>
 force_inline constexpr auto cos(X x) -> X
 {
-    if constexpr (Wrap) {
-        using S = scalar_t<X>;
-        constexpr auto pi = std::numbers::pi_v<S>;
-        x = cxm::wrap(x, -pi, pi);
-    }
-
     constexpr auto c0 = X(9.99999991e-01);
     constexpr auto c2 = X(-4.99999934e-01);
     constexpr auto c4 = X(4.16665646e-02);
@@ -324,21 +320,15 @@ force_inline constexpr auto cos(X x) -> X
 static_assert(about_equal(cos(0.f), 1.f));
 
 /**
- * @brief sin (approx)
+ * @brief sin (approx on -pi...pi)
  *
  * @tparam X
  * @param x
  * @return X
  */
-template<typename X, bool Wrap = false>
+template<typename X>
 force_inline constexpr auto sin(X x) -> X
 {
-    if constexpr (Wrap) {
-        using S = scalar_t<X>;
-        constexpr auto pi = std::numbers::pi_v<S>;
-        x = cxm::wrap(x, -pi, pi);
-    }
-
     constexpr auto c1 = X(9.99999737e-01);
     constexpr auto c3 = X(-1.66665387e-01);
     constexpr auto c5 = X(8.33221031e-03);
@@ -354,7 +344,7 @@ force_inline constexpr auto sin(X x) -> X
 static_assert(about_equal(sin(0.f), 0.f));
 
 /**
- * @brief tan (approx)
+ * @brief tan (approx on -pi/2...pi/2)
  *
  * @tparam X
  * @param x
@@ -363,10 +353,6 @@ static_assert(about_equal(sin(0.f), 0.f));
 template<typename X>
 force_inline constexpr auto tan(X x) -> X
 {
-    using S = scalar_t<X>;
-    constexpr auto pi = std::numbers::pi_v<S>;
-    x = cxm::wrap(x, -pi / 2, pi / 2);
-
     constexpr auto a1 = X(1);
     constexpr auto a3 = X(-5 / 39.0);
     constexpr auto a5 = X(2 / 715.0);
@@ -482,25 +468,39 @@ force_inline constexpr auto exp2(X x) -> X
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
     const auto int_part = cxm::round_to_int(x);
-    const auto dec_part = x - cxm::expand_to_float(int_part);
-
-    const auto int_pow = cxm::reinterpret_as_float((int_part + exp_bias) << sig_bits);
-
-    // Compute Padé approximant of exp2 on -0.5...0.5.
-    constexpr auto a0 = X(1);
-    constexpr auto a1 = X(339557 / 816462.0);
-    constexpr auto a2 = X(10716 / 148693.0);
-    constexpr auto a3 = X(4741 / 854171.0);
-    constexpr auto b0 = X(1);
-    constexpr auto b1 = X(-234861 / 847082.0);
-    constexpr auto b2 = X(3572 / 148693.0);
-
-    const auto numer = a0 + dec_part * (a1 + dec_part * (a2 + dec_part * a3));
-    const auto denom = b0 + dec_part * (b1 + dec_part * b2);
-    const auto dec_pow = numer / denom;
+    const auto dec_part = x - signed_to_float(int_part);
+    
+    // In C++20 we have two's complement.
+    const auto val = (signed_to_unsigned(int_part) + exp_bias) << sig_bits;
+    const auto int_pow = cxm::reinterpret_as_float(val);
+    
+    // minimax approximation of exp2 on -0.5...0.5
+    // computed with cvxpy
+    constexpr auto c0 = X(1.00000007);
+    constexpr auto c1 = X(0.69314697);
+    constexpr auto c2 = X(0.2402212);
+    constexpr auto c3 = X(0.05550713);
+    constexpr auto c4 = X(0.00967553);
+    constexpr auto c5 = X(0.00132767);
+    
+    const auto dec_pow = c0 + dec_part * (c1 + dec_part * (c2 + dec_part * (c3 + dec_part * (c4 + dec_part * c5))));
 
     return int_pow * dec_pow;
 }
+
+static_assert(about_equal(exp2(-3.f), 1 / 8.f));
+static_assert(about_equal(exp2(-1.f), 0.5f));
+static_assert(about_equal(exp2(0.f), 1.f));
+static_assert(about_equal(exp2(1.f), 2.f));
+static_assert(about_equal(exp2(2.f), 4.f));
+static_assert(about_equal(exp2(3.5f), 11.313708f));
+
+static_assert(about_equal(exp2(-3.0), 1 / 8.0));
+static_assert(about_equal(exp2(-1.0), 0.5));
+static_assert(about_equal(exp2(0.0), 1.0));
+static_assert(about_equal(exp2(1.0), 2.0));
+static_assert(about_equal(exp2(2.0), 4.0));
+static_assert(about_equal(exp2(3.5), 11.313708));
 
 /**
  * @brief log2 (approx)
@@ -515,33 +515,47 @@ force_inline constexpr auto log2(X x) -> X
     using S = scalar_t<X>;
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
-
     constexpr auto one = decltype(sig_bits){1};
     constexpr auto sig_mask = (one << sig_bits) - one;
-
+    
+    // In C++ 20 we have two's complement.
     const auto bits = cxm::reinterpret_as_int(x);
-    const auto int_part = cxm::expand_to_float((bits >> sig_bits) - exp_bias);
+    const auto val = unsigned_to_signed((bits >> sig_bits) - exp_bias);
+    const auto int_part = signed_to_float(val);
     const auto m = cxm::reinterpret_as_float((exp_bias << sig_bits) | (bits & sig_mask));
 
     // Compute quadratic approximation of log2 on 1...2.
-    // See:
-    // https://tech.ebayinc.com/engineering/fast-approximate-logarithms-part-i-the-basics/
+    // see: https://tech.ebayinc.com/engineering/fast-approximate-logarithms-part-i-the-basics/
     // const auto dec_part = X(-1 / 3.0) * m * m + 2 * m - X(5 / 3.0);
+    
+    // minimax approximation
+    // computed using cvxpy
+    constexpr auto c1 = X(1.44268127);
+    constexpr auto c2 = X(-0.72039364);
+    constexpr auto c3 = X(0.46899335);
+    constexpr auto c4 = X(-0.30262538);
+    constexpr auto c5 = X(0.1456237);
+    constexpr auto c6 = X(-0.03428757);
 
     const auto xm = m - 1; // polynomial is in x-1
-    const auto xm2 = xm * xm;
-    const auto xm3 = xm2 * xm;
-    const auto xm4 = xm2 * xm2;
-    const auto xm5 = xm3 * xm2;
-    const auto xm6 = xm3 * xm3;
-
-    // computed using cvxpy
-    const auto dec_part = X(-0.03428757) * xm6 + X(0.1456237) * xm5 + X(-0.30262538) * xm4 + X(0.46899335) * xm3 + X(-0.72039364f) * xm2 + X(1.44268127) * xm;
-    // const auto dec_part = X(-0.10696638) * xm4 + X(0.3659736) * xm3 + X(-0.70149144) * xm2 + X(1.44209558) * xm; 
-    // const auto dec_part = X(-0.43266689) * xm2 + X(1.41124698) * xm;
+    const auto dec_part = xm * (c1 + xm * (c2 + xm * (c3 + xm * (c4 + xm * (c5 + xm * c6)))));
 
     return int_part + dec_part;
 }
+
+static_assert(about_equal(log2(0.1f), -3.321928f, 1e-5f));
+static_assert(about_equal(log2(0.5f), -1.f));
+static_assert(about_equal(log2(1.f), 0.f));
+static_assert(about_equal(log2(2.f), 1.f));
+static_assert(about_equal(log2(8.f), 3.f));
+static_assert(about_equal(log2(69.f), 6.108524f, 1e-5f));
+
+static_assert(about_equal(log2(0.1), -3.321928, 1e-5));
+static_assert(about_equal(log2(0.5), -1.0));
+static_assert(about_equal(log2(1.0), 0.0));
+static_assert(about_equal(log2(2.0), 1.0));
+static_assert(about_equal(log2(8.0), 3.0));
+static_assert(about_equal(log2(69.0), 6.108524, 1e-5));
 
 /**
  * @brief exp (approx)

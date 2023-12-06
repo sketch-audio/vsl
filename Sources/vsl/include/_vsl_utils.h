@@ -10,10 +10,8 @@ force_inline constexpr auto elements_equal(X a, X b) -> bool
 {
     if constexpr (is_vector_v<X>) {
         using I = __int128_t; // !!!
-        static_assert(sizeof(X) == sizeof(I));
-        const auto msk = a == b;
-        const auto res = std::bit_cast<I>(msk); // Not yet constexpr sadly.
-        return res == I(-1);
+        const auto result = std::bit_cast<I>(a == b); // Not yet constexpr sadly.
+        return result == I(-1);
     }
     else {
         return a == b;
@@ -48,14 +46,54 @@ static_assert(select(true, 1.f, 0.f) == 1.f);
 static_assert(select(false, 1.f, 0.f) == 0.f);
 
 /**
- * @brief counterpart_cast (a simd-compatible static_cast to counterpart type)
+ * @brief 
+ * 
+ * @tparam X 
+ * @param x
+ * @return auto
+ */
+template<Unsigned X>
+force_inline constexpr auto unsigned_to_signed(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        using C = us_cvt_t<scalar_t<X>>;
+        return simd::convert<C>(x);
+    }
+    else {
+        using C = us_cvt_t<X>;
+        return static_cast<C>(x);
+    }
+}
+
+/**
+ * @brief 
  * 
  * @tparam X 
  * @param x 
- * @return counterpart_t<X> 
+ * @return auto 
  */
-template<typename X>
-force_inline constexpr auto counterpart_cast(X x) -> counterpart_t<X>
+template<Signed X>
+force_inline constexpr auto signed_to_unsigned(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        using C = su_cvt_t<scalar_t<X>>;
+        return simd::convert<C>(x);
+    }
+    else {
+        using C = su_cvt_t<X>;
+        return static_cast<C>(x);
+    }
+}
+
+/**
+ * @brief 
+ * 
+ * @tparam X 
+ * @param x 
+ * @return auto 
+ */
+template<FloatingPoint X>
+force_inline constexpr auto float_to_signed(X x)
 {
     if constexpr (is_vector_v<X>) {
         using C = counterpart_t<scalar_t<X>>;
@@ -63,6 +101,66 @@ force_inline constexpr auto counterpart_cast(X x) -> counterpart_t<X>
     }
     else {
         using C = counterpart_t<X>;
+        return static_cast<C>(x);
+    }
+}
+
+/**
+ * @brief 
+ * 
+ * @tparam X 
+ * @param x 
+ * @return auto 
+ */
+template<Signed X>
+force_inline constexpr auto signed_to_float(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        using C = counterpart_t<scalar_t<X>>;
+        return simd::convert<C>(x);
+    }
+    else {
+        using C = counterpart_t<X>;
+        return static_cast<C>(x);
+    }
+}
+
+/**
+ * @brief 
+ * 
+ * @tparam X 
+ * @param x 
+ * @return auto 
+ */
+template<FloatingPoint X>
+force_inline constexpr auto float_to_unsigned(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        using C = unsigned_counterpart_t<scalar_t<X>>;
+        return simd::convert<C>(x);
+    }
+    else {
+        using C = unsigned_counterpart_t<X>;
+        return static_cast<C>(x);
+    }
+}
+
+/**
+ * @brief 
+ * 
+ * @tparam X 
+ * @param x 
+ * @return auto 
+ */
+template<Unsigned X>
+force_inline constexpr auto unsigned_to_float(X x)
+{
+    if constexpr (is_vector_v<X>) {
+        using C = unsigned_counterpart_t<scalar_t<X>>;
+        return simd::convert<C>(x);
+    }
+    else {
+        using C = unsigned_counterpart_t<X>;
         return static_cast<C>(x);
     }
 }
