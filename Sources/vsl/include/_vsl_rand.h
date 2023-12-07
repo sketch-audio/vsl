@@ -12,19 +12,21 @@ enum class Random_engine {
     linear_congruential, xorshift
 };
 
-template<typename X, size_t Seed = 808, Random_engine Engine = Random_engine::linear_congruential>
+template<typename X, Random_engine Engine = Random_engine::linear_congruential>
 struct Random_gen {
+    
+    static constexpr auto default_seed = 808;
 
     using S = scalar_t<X>;
 
-    Random_gen() : _min{0}, _max{1} {}
-    Random_gen(S min, S max) : _min{min}, _max{max} {}
+    Random_gen() : _seed(default_seed), _min{0}, _max{1} {}
+    Random_gen(S min, S max, uint_t<X> seed = default_seed) : _seed{seed}, _min{min}, _max{max} {}
     
     //
     auto reset(mask_t<X> mask = true_mask_v<X>) -> void
     {
-        constexpr auto reset = uint_t<X>(Seed);
-        _state = select(mask, reset, _state);
+        const auto cond = mask_to_bool(mask);
+        _state = select(cond, _seed, _state);
     }
     
     auto next() -> X
@@ -36,7 +38,7 @@ struct Random_gen {
         
         // We're doing the thing where we shift down so x doesn't get "rounded" on conversion.
         const auto x = unsigned_to_float((_next<Engine>() >> shift) & mask);
-        const auto y = unsigned_to_float(denom);
+        constexpr auto y = unsigned_to_float(denom);
         const auto norm = x / y;
         
         return (_max - _min) * norm + _min;
@@ -44,10 +46,12 @@ struct Random_gen {
     
 private:
     
-    uint_t<X> _state = Seed;
+    const uint_t<X> _seed = default_seed;
     
     const S _min{};
     const S _max{};
+    
+    uint_t<X> _state = _seed;
     
     template<Random_engine>
     auto _next() -> uint_t<X> { static_assert(deferred_false_v<X>); }
