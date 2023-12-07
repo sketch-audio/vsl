@@ -1,7 +1,6 @@
 #ifndef _vsl_core_h
 #define _vsl_core_h
 
-#include <cstdint>
 #include <type_traits>
 
 #include <simd/simd.h>
@@ -29,8 +28,12 @@ using long2 = simd::long2;
 using uint4 = simd::uint4;
 using ulong2 = simd::ulong2;
 
-static_assert(sizeof(float) == 4, "Size of float must be 4 bytes.");
-static_assert(sizeof(double) == 8, "Size of double must be 8 bytes.");
+using float1 = simd::float1;
+using double1 = simd::double1;
+using int1 = simd::int1;
+using long1 = simd::long1;
+using uint1 = simd::uint1;
+using ulong1 = simd::ulong1;
 
 // MARK: - Traits
 
@@ -117,7 +120,7 @@ inline constexpr bool is_vector_v = is_vector<T>::value;
  * 
  */
 template<typename T>
-struct is_scalar_unsigned : is_one_of<T, uint32_t, uint64_t> {};
+struct is_scalar_unsigned : is_one_of<T, uint1, ulong1> {};
 
 template<typename T>
 inline constexpr bool is_scalar_unsigned_v = is_scalar_unsigned<T>::value;
@@ -128,7 +131,7 @@ inline constexpr bool is_scalar_unsigned_v = is_scalar_unsigned<T>::value;
  * @tparam T 
  */
 template<typename T>
-struct is_scalar_signed : is_one_of<T, int32_t, int64_t> {};
+struct is_scalar_signed : is_one_of<T, int1, long1> {};
 
 template<typename T>
 inline constexpr bool is_scalar_signed_v = is_scalar_signed<T>::value;
@@ -150,7 +153,7 @@ inline constexpr bool is_scalar_integral_v = is_scalar_integral<T>::value;
  * @tparam T 
  */
 template<typename T>
-struct is_scalar_floating_point : is_one_of<T, float, double> {};
+struct is_scalar_floating_point : is_one_of<T, float1, double1> {};
 
 template<typename T>
 inline constexpr bool is_scalar_floating_point_v = is_scalar_floating_point<T>::value;
@@ -218,22 +221,22 @@ template<typename T>
 struct scalar_eq { typedef T type; };
 
 template<>
-struct scalar_eq<float4> { typedef float type; };
+struct scalar_eq<float4> { typedef float1 type; };
 
 template<>
-struct scalar_eq<double2> { typedef double type; };
+struct scalar_eq<double2> { typedef double1 type; };
 
 template<>
-struct scalar_eq<int4> { typedef int32_t type; };
+struct scalar_eq<int4> { typedef int1 type; };
 
 template<>
-struct scalar_eq<long2> { typedef int64_t type; };
+struct scalar_eq<long2> { typedef long1 type; };
 
 template<>
-struct scalar_eq<uint4> { typedef uint32_t type; };
+struct scalar_eq<uint4> { typedef uint1 type; };
 
 template<>
-struct scalar_eq<ulong2> { typedef uint64_t type; };
+struct scalar_eq<ulong2> { typedef ulong1 type; };
 
 /**
  * @brief scalar_t
@@ -252,22 +255,22 @@ template<typename T>
 struct vector_eq { typedef T type; };
 
 template<>
-struct vector_eq<float> { typedef float4 type; };
+struct vector_eq<float1> { typedef float4 type; };
 
 template<>
-struct vector_eq<double> { typedef double2 type; };
+struct vector_eq<double1> { typedef double2 type; };
 
 template<>
-struct vector_eq<int32_t> { typedef int4 type; };
+struct vector_eq<int1> { typedef int4 type; };
 
 template<>
-struct vector_eq<int64_t> { typedef long2 type; };
+struct vector_eq<long1> { typedef long2 type; };
 
 template<>
-struct vector_eq<uint32_t> { typedef uint4 type; };
+struct vector_eq<uint1> { typedef uint4 type; };
 
 template<>
-struct vector_eq<uint64_t> { typedef ulong2 type; };
+struct vector_eq<ulong1> { typedef ulong2 type; };
 
 /**
  * @brief vector_t
@@ -286,16 +289,16 @@ template<typename T>
 struct counterpart { static_assert(deferred_false_v<T>, "No suitable counterpart defined."); };
 
 template<>
-struct counterpart<float> { typedef int32_t type; };
+struct counterpart<float1> { typedef int1 type; };
 
 template<>
-struct counterpart<double> { typedef int64_t type; };
+struct counterpart<double1> { typedef long1 type; };
 
 template<>
-struct counterpart<int32_t> { typedef float type; };
+struct counterpart<int1> { typedef float1 type; };
 
 template<>
-struct counterpart<int64_t> { typedef double type; };
+struct counterpart<long1> { typedef double1 type; };
 
 template<>
 struct counterpart<float4> { typedef int4 type; };
@@ -326,16 +329,16 @@ template<typename T>
 struct unsigned_counterpart { static_assert(deferred_false_v<T>, "No suitable unsigned counterpart defined."); };
 
 template<>
-struct unsigned_counterpart<float> { typedef uint32_t type; };
+struct unsigned_counterpart<float1> { typedef uint1 type; };
 
 template<>
-struct unsigned_counterpart<double> { typedef uint64_t type; };
+struct unsigned_counterpart<double1> { typedef ulong1 type; };
 
 template<>
-struct unsigned_counterpart<uint32_t> { typedef float type; };
+struct unsigned_counterpart<uint1> { typedef float1 type; };
 
 template<>
-struct unsigned_counterpart<uint64_t> { typedef double type; };
+struct unsigned_counterpart<ulong1> { typedef double1 type; };
 
 template<>
 struct unsigned_counterpart<float4> { typedef uint4 type; };
@@ -366,10 +369,10 @@ template<typename T>
 struct su_cvt { static_assert(deferred_false_v<T>, "No suitable counterpart defined."); };
 
 template<>
-struct su_cvt<int32_t> { typedef uint32_t type; };
+struct su_cvt<int1> { typedef uint1 type; };
 
 template<>
-struct su_cvt<int64_t> { typedef uint64_t type; };
+struct su_cvt<long1> { typedef ulong1 type; };
 
 template<>
 struct su_cvt<int4> { typedef uint4 type; };
@@ -394,10 +397,10 @@ template<typename T>
 struct us_cvt { static_assert(deferred_false_v<T>, "No suitable counterpart defined."); };
 
 template<>
-struct us_cvt<uint32_t> { typedef int32_t type; };
+struct us_cvt<uint1> { typedef int1 type; };
 
 template<>
-struct us_cvt<uint64_t> { typedef int64_t type; };
+struct us_cvt<ulong1> { typedef long1 type; };
 
 template<>
 struct us_cvt<uint4> { typedef int4 type; };
@@ -527,10 +530,10 @@ template<typename T>
 struct ieee_exp_bias { static_assert(deferred_false_v<T>, "IEEE exponent bias not defined."); };
 
 template<>
-struct ieee_exp_bias<float> : std::integral_constant<uint32_t, 127> {};
+struct ieee_exp_bias<float1> : std::integral_constant<uint1, 127> {};
 
 template<>
-struct ieee_exp_bias<double> : std::integral_constant<uint64_t, 1023> {};
+struct ieee_exp_bias<double1> : std::integral_constant<ulong1, 1023> {};
 
 template<typename T>
 inline constexpr auto ieee_exp_bias_v = ieee_exp_bias<T>::value;
@@ -544,10 +547,10 @@ template<typename T>
 struct ieee_sig_bits { static_assert(deferred_false_v<T>, "IEEE significand bits not defined."); };
 
 template<>
-struct ieee_sig_bits<float> : std::integral_constant<uint32_t, 23> {};
+struct ieee_sig_bits<float1> : std::integral_constant<uint1, 23> {};
 
 template<>
-struct ieee_sig_bits<double> : std::integral_constant<uint64_t, 52> {};
+struct ieee_sig_bits<double1> : std::integral_constant<ulong1, 52> {};
 
 template<typename T>
 inline constexpr auto ieee_sig_bits_v = ieee_sig_bits<T>::value;
@@ -561,10 +564,10 @@ template<typename T>
 struct ieee_exp_bits { static_assert(deferred_false_v<T>, "IEEE exponent bits not defined."); };
 
 template<>
-struct ieee_exp_bits<float> : std::integral_constant<uint32_t, 8> {};
+struct ieee_exp_bits<float1> : std::integral_constant<uint1, 8> {};
 
 template<>
-struct ieee_exp_bits<double> : std::integral_constant<uint64_t, 11> {};
+struct ieee_exp_bits<double1> : std::integral_constant<ulong1, 11> {};
 
 template<typename T>
 inline constexpr auto ieee_exp_bits_v = ieee_exp_bits<T>::value;
