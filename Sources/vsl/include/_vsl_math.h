@@ -310,10 +310,10 @@ force_inline constexpr auto min(X a, C b) -> X
         return cxm::min(a, b);
     }
     else if constexpr (is_vector_v<X>) {
-        return simd::min(a, b);
+        return simd::min(a, X(b));
     }
     else {
-        return std::min(a, b);
+        return std::min(a, X(b));
     }
 }
 
@@ -324,10 +324,10 @@ force_inline constexpr auto max(X a, C b) -> X
         return cxm::max(a, b);
     }
     else if constexpr (is_vector_v<X>) {
-        return simd::max(a, b);
+        return simd::max(a, X(b));
     }
     else {
-        return std::max(a, b);
+        return std::max(a, X(b));
     }
 }
 
@@ -338,10 +338,10 @@ force_inline constexpr auto clamp(X x, C a, C b) -> X
         return cxm::clamp(x, a, b);
     }
     else if constexpr (is_vector_v<X>) {
-        return simd::clamp(x, a, b);
+        return simd::clamp(x, X(a), X(b));
     }
     else {
-        return std::clamp(x, a, b);
+        return std::clamp(x, X(a), X(b));
     }
 }
 
