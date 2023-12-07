@@ -1,7 +1,7 @@
 # vsl
 The vector (simd) support library. Requires C++20, Apple platform.
 
-##Todo items:
+## Todo items:
 - Documentation
 - Add more tests
 - Benchmarking
