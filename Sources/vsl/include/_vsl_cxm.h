@@ -568,7 +568,7 @@ template<typename X>
 force_inline constexpr auto exp(X x) -> X
 {
     using S = scalar_t<X>;
-    return cxm::exp2(std::numbers::log2e_v<S> *x);
+    return cxm::exp2(std::numbers::log2e_v<S> * x);
 }
 
 /**
@@ -582,7 +582,7 @@ template<typename X>
 force_inline constexpr auto log(X x) -> X
 {
     using S = scalar_t<X>;
-    return std::numbers::ln2_v<S> *cxm::log2(x);
+    return std::numbers::ln2_v<S> * cxm::log2(x);
 }
 
 /**

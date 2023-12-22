@@ -550,6 +550,6 @@ struct ieee_exp_bits<double> : std::integral_constant<ulong1, 11> {};
 template<typename T>
 inline constexpr auto ieee_exp_bits_v = ieee_exp_bits<T>::value;
 
-} // namespace cxm 
+} // namespace vsl
 
 #endif /* _vsl_core_h */

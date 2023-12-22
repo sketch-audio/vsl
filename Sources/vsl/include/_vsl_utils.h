@@ -1,6 +1,10 @@
 #ifndef _vsl_utils_h
 #define _vsl_utils_h
 
+#include <bit>
+
+#include <simd/simd.h>
+
 #include "_vsl_core.h"
 
 namespace vsl {
