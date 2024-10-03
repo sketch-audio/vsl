@@ -9,32 +9,9 @@
 
 namespace vsl {
 
-template<typename X>
-force_inline constexpr auto elements_equal(X a, X b) -> bool
-{
-    if constexpr (is_vector_v<X>) {
-        using I = __int128_t; // !!!
-        const auto result = std::bit_cast<I>(a == b); // Not yet constexpr sadly.
-        return result == I(-1);
-    }
-    else {
-        return a == b;
-    }
-}
+// MARK: - Logic
 
-static_assert(elements_equal(1.f, 1.f));
-static_assert(elements_equal(1.f, 2.f) == false);
-
-/**
- * @brief select (a simd-compatible ternary operator)
- *
- * @tparam C
- * @tparam X
- * @param cond
- * @param val_t
- * @param val_f
- * @return X
- */
+/// A simd-compatible ternary operator.
 template<typename C, typename X>
 force_inline constexpr auto select(C cond, X val_t, X val_f) -> X
 {
@@ -49,93 +26,108 @@ force_inline constexpr auto select(C cond, X val_t, X val_f) -> X
 static_assert(select(true, 1.f, 0.f) == 1.f);
 static_assert(select(false, 1.f, 0.f) == 0.f);
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x
- * @return auto
- */
+/// Any
+template<typename C>
+force_inline constexpr auto any(C cond) -> bool
+{
+    if constexpr (is_vector_v<C>) {
+        return simd::any(cond);
+    }
+    else {
+        return cond;
+    }
+}
+
+static_assert(any(true));
+static_assert(!any(false));
+
+/// All
+template<typename C>
+force_inline constexpr auto all(C cond) -> bool
+{
+    if constexpr (is_vector_v<C>) {
+        return simd::all(cond);
+    }
+    else {
+        return cond;
+    }
+}
+
+static_assert(all(true));
+static_assert(!all(false));
+
+/// About equal
+template<typename X>
+force_inline constexpr auto about_equal(X a, X b, X tol = 1e-6f)
+{
+    return (a - b) < tol & (b - a) < tol; // We don't have `abs` yet.
+}
+
+static_assert(about_equal(1.f, 1 + 1e-7f));
+static_assert(!about_equal(1.f, 1 + 1e-5f));
+static_assert(about_equal(1.0, 1 + 1e-7));
+static_assert(!about_equal(1.0, 1 + 1e-5));
+
+
+// MARK: - Casts
+
+///
 template<Unsigned X>
 force_inline constexpr auto unsigned_to_signed(X x)
 {
     if constexpr (is_vector_v<X>) {
-        using C = us_cvt_t<scalar_t<X>>;
+        using C = signed_eq_t<scalar_t<X>>;
         return simd::convert<C>(x);
     }
     else {
-        using C = us_cvt_t<X>;
+        using C = signed_eq_t<X>;
         return static_cast<C>(x);
     }
 }
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x 
- * @return auto 
- */
+///
 template<Signed X>
 force_inline constexpr auto signed_to_unsigned(X x)
 {
     if constexpr (is_vector_v<X>) {
-        using C = su_cvt_t<scalar_t<X>>;
+        using C = unsigned_eq_t<scalar_t<X>>;
         return simd::convert<C>(x);
     }
     else {
-        using C = su_cvt_t<X>;
+        using C = unsigned_eq_t<X>;
         return static_cast<C>(x);
     }
 }
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x 
- * @return auto 
- */
+///
 template<FloatingPoint X>
 force_inline constexpr auto float_to_signed(X x)
 {
     if constexpr (is_vector_v<X>) {
-        using C = counterpart_t<scalar_t<X>>;
+        using C = signed_counterpart_t<scalar_t<X>>;
         return simd::convert<C>(x);
     }
     else {
-        using C = counterpart_t<X>;
+        using C = signed_counterpart_t<X>;
         return static_cast<C>(x);
     }
 }
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x 
- * @return auto 
- */
+///
 template<Signed X>
 force_inline constexpr auto signed_to_float(X x)
 {
     if constexpr (is_vector_v<X>) {
-        using C = counterpart_t<scalar_t<X>>;
+        using C = signed_counterpart_t<scalar_t<X>>;
         return simd::convert<C>(x);
     }
     else {
-        using C = counterpart_t<X>;
+        using C = signed_counterpart_t<X>;
         return static_cast<C>(x);
     }
 }
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x 
- * @return auto 
- */
+///
 template<FloatingPoint X>
 force_inline constexpr auto float_to_unsigned(X x)
 {
@@ -149,13 +141,7 @@ force_inline constexpr auto float_to_unsigned(X x)
     }
 }
 
-/**
- * @brief 
- * 
- * @tparam X 
- * @param x 
- * @return auto 
- */
+///
 template<Unsigned X>
 force_inline constexpr auto unsigned_to_float(X x)
 {
@@ -169,9 +155,25 @@ force_inline constexpr auto unsigned_to_float(X x)
     }
 }
 
-/**
- 
- */
+///
+template<Unsigned X>
+force_inline constexpr auto reinterpret_as_float(X x)
+{
+    using F = unsigned_counterpart_t<X>;
+    return std::bit_cast<F>(x);
+}
+
+///
+template<FloatingPoint X>
+force_inline constexpr auto reinterpret_as_int(X x) -> uint_t<X>
+{
+    using I = unsigned_counterpart_t<X>;
+    return std::bit_cast<I>(x);
+}
+
+// MARK: - Masks
+
+///
 template<typename X>
 force_inline auto mask_to_bool(X x)
 {
@@ -183,9 +185,7 @@ force_inline auto mask_to_bool(X x)
     }
 }
 
-/**
- 
- */
+///
 template<typename X>
 force_inline auto bool_to_mask(X x)
 {
@@ -197,15 +197,13 @@ force_inline auto bool_to_mask(X x)
     }
 }
 
-/**
- 
- */
+///
 template<FloatingPoint X>
 force_inline auto mask_for_lane(size_t i) -> mask_t<X>
 {
     static_assert(is_vector_v<X>, "Can't use mask_for_lane in scalar code.");
     auto mask = mask_t<X>(0);
-    mask[i] = -1;
+    mask[i % num_members_v<X>] = -1;
     return mask;
 }
 

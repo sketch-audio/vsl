@@ -264,7 +264,7 @@ template<typename T>
 using vector_t = typename vector_eq<T>::type;
 
 /**
- * @brief Maps a type to its counterpart type.
+ * @brief Maps a type to its signed counterpart type.
  *
  * A counterpart type is defined as the same-sized (signed) integral type of a floating point type or vice versa.
  * For example, the counterpart of float is int1, and the counterpart of int1 is float.
@@ -272,34 +272,34 @@ using vector_t = typename vector_eq<T>::type;
  * @tparam T The type to map.
  */
 template<typename T>
-struct counterpart { static_assert(deferred_false_v<T>, "No suitable counterpart defined."); };
+struct signed_counterpart { static_assert(deferred_false_v<T>, "No suitable  signed_counterpart defined."); };
 
 template<>
-struct counterpart<float> { typedef int1 type; };
+struct signed_counterpart<float> { typedef int1 type; };
 
 template<>
-struct counterpart<double> { typedef long1 type; };
+struct signed_counterpart<double> { typedef long1 type; };
 
 template<>
-struct counterpart<int1> { typedef float type; };
+struct signed_counterpart<int1> { typedef float type; };
 
 template<>
-struct counterpart<long1> { typedef double type; };
+struct signed_counterpart<long1> { typedef double type; };
 
 template<>
-struct counterpart<float4> { typedef int4 type; };
+struct signed_counterpart<float4> { typedef int4 type; };
 
 template<>
-struct counterpart<double2> { typedef long2 type; };
+struct signed_counterpart<double2> { typedef long2 type; };
 
 template<>
-struct counterpart<int4> { typedef float4 type; };
+struct signed_counterpart<int4> { typedef float4 type; };
 
 template<>
-struct counterpart<long2> { typedef double2 type; };
+struct signed_counterpart<long2> { typedef double2 type; };
 
 template<typename T>
-using counterpart_t = typename counterpart<T>::type;
+using signed_counterpart_t = typename signed_counterpart<T>::type;
 
 /**
  * @brief Maps a type to its unsigned counterpart type.
@@ -340,56 +340,56 @@ template<typename T>
 using unsigned_counterpart_t = typename unsigned_counterpart<T>::type;
 
 /**
- * @brief Maps a signed type to its unsigned counterpart.
+ * @brief Maps a signed type to its unsigned equivalent.
  *
  * This is used to convert signed integral types to their corresponding unsigned types.
- * For example, the unsigned counterpart of int1 is uint1, and the unsigned counterpart of long1 is ulong1.
+ * For example, the unsigned equivalent of int1 is uint1, and the unsigned equivalent of long1 is ulong1.
  *
  * @tparam T The type to map.
  */
 template<typename T>
-struct su_cvt { static_assert(deferred_false_v<T>, "No suitable unsigned type defined."); };
+struct unsigned_eq { static_assert(deferred_false_v<T>, "No suitable unsigned type defined."); };
 
 template<>
-struct su_cvt<int1> { typedef uint1 type; };
+struct unsigned_eq<int1> { typedef uint1 type; };
 
 template<>
-struct su_cvt<long1> { typedef ulong1 type; };
+struct unsigned_eq<long1> { typedef ulong1 type; };
 
 template<>
-struct su_cvt<int4> { typedef uint4 type; };
+struct unsigned_eq<int4> { typedef uint4 type; };
 
 template<>
-struct su_cvt<long2> { typedef ulong2 type; };
+struct unsigned_eq<long2> { typedef ulong2 type; };
 
 template<typename T>
-using su_cvt_t = typename su_cvt<T>::type;
+using unsigned_eq_t = typename unsigned_eq<T>::type;
 
 /**
- * @brief Maps an unsigned type to its signed counterpart.
+ * @brief Maps an unsigned type to its signed equivalent.
  *
  * This is used to convert unsigned integral types to their corresponding signed types.
- * For example, the signed counterpart of uint1 is int1, and the signed counterpart of ulong1 is long1.
+ * For example, the signed equivalent of uint1 is int1, and the signed equivalent of ulong1 is long1.
  *
  * @tparam T The type to map.
  */
 template<typename T>
-struct us_cvt { static_assert(deferred_false_v<T>, "No suitable signed type defined."); };
+struct signed_eq { static_assert(deferred_false_v<T>, "No suitable signed type defined."); };
 
 template<>
-struct us_cvt<uint1> { typedef int1 type; };
+struct signed_eq<uint1> { typedef int1 type; };
 
 template<>
-struct us_cvt<ulong1> { typedef long1 type; };
+struct signed_eq<ulong1> { typedef long1 type; };
 
 template<>
-struct us_cvt<uint4> { typedef int4 type; };
+struct signed_eq<uint4> { typedef int4 type; };
 
 template<>
-struct us_cvt<ulong2> { typedef long2 type; };
+struct signed_eq<ulong2> { typedef long2 type; };
 
 template<typename T>
-using us_cvt_t = typename us_cvt<T>::type;
+using signed_eq_t = typename signed_eq<T>::type;
 
 /**
  * @brief Checks if T is an unsigned scalar or vector type.
@@ -438,14 +438,14 @@ concept Vector = is_vector_v<T>;
  * @tparam T A floating-point type.
  */
 template<FloatingPoint T>
-using mask_t = counterpart_t<T>;
+using mask_t = signed_counterpart_t<T>;
 
 /**
  * @brief Gets the (signed) integral type for a floating-point type.
  * @tparam T A floating-point type.
  */
 template<FloatingPoint T>
-using int_t = counterpart_t<T>;
+using int_t = signed_counterpart_t<T>;
 
 /**
  * @brief Gets the (unsigned) integral type for a floating-point type.

@@ -1,22 +1,16 @@
 #ifndef _vsl_cxm_h
 #define _vsl_cxm_h
 
-#include <bit>
 #include <numbers>
 
 #include "_vsl_core.h"
 #include "_vsl_utils.h" // select, etc.
 
-namespace vsl {
-namespace cxm {
+namespace vsl::cxm {
 
-/**
- * @brief abs
- *
- * @tparam X
- * @param x
- * @return X
- */
+// MARK: - Basic
+
+///
 template<typename X>
 force_inline constexpr auto abs(X x) -> X
 {
@@ -33,13 +27,7 @@ static_assert(abs(-1.0) == 1.0);
 static_assert(abs(0.0) == 0.0);
 static_assert(abs(2.0) == 2.0);
 
-/**
- * @brief trunc
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto trunc(X x) -> X
 {
@@ -69,13 +57,7 @@ static_assert(trunc(5.0) == 5.0);
 static_assert(trunc(-1.2) == -1.0);
 static_assert(trunc(1e20) == 1e20);
 
-/**
- * @brief floor
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto floor(X x) -> X
 {
@@ -88,13 +70,7 @@ static_assert(floor(-2.3) == -3.0);
 static_assert(floor(5.0) == 5.0);
 static_assert(floor(-1.f) == -1.f);
 
-/**
- * @brief ceil
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto ceil(X x) -> X 
 {
@@ -107,13 +83,7 @@ static_assert(ceil(3.25f) == 4.f);
 static_assert(ceil(-2.1) == -2.0);
 static_assert(ceil(5.f) == 5.f);
 
-/**
- * @brief round
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto round(X x) -> X 
 {
@@ -125,114 +95,9 @@ static_assert(round(1.49f) == 1.f);
 static_assert(round(-1.5f) == -1.f);
 static_assert(round(-2.9) == -3.0);
 
-/**
- * @brief trunc a floating-point type to a same-sized integral type
- *
- * @tparam X
- * @param x
- * @return int_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto trunc_to_int(X x) -> int_t<X>
-{
-    return float_to_signed(cxm::trunc(x));
-}
+// MARK: - fmod, wrap
 
-/**
- * @brief floor a floating-point type to a same-sized integral type
- *
- * @tparam X
- * @param x
- * @return int_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto floor_to_int(X x) -> int_t<X>
-{
-    return float_to_signed(cxm::floor(x));
-}
-
-/**
- * @brief ceil a floating-point type to a same-sized integral type
- *
- * @tparam X
- * @param x
- * @return int_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto ceil_to_int(X x) -> int_t<X>
-{
-    return float_to_signed(cxm::ceil(x));
-}
-
-/**
- * @brief round a floating-point type to a same-sized integral type
- *
- * @tparam X
- * @param x
- * @return int_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto round_to_int(X x) -> int_t<X>
-{
-    return float_to_signed(cxm::round(x));
-}
-
-/**
- * @brief reinterpret an integral type as the same-sized floating-point type
- *
- * @tparam X
- * @param x
- * @return auto (a floating-point type)
- */
-template<Unsigned X>
-force_inline constexpr auto reinterpret_as_float(X x)
-{
-    using F = unsigned_counterpart_t<X>;
-    return std::bit_cast<F>(x);
-}
-
-/**
- * @brief reinterpret a floating-point type as the same-sized (unsigned) integral type
- *
- * @tparam X
- * @param x
- * @return uint_t<X>
- */
-template<FloatingPoint X>
-force_inline constexpr auto reinterpret_as_int(X x) -> uint_t<X>
-{
-    using I = unsigned_counterpart_t<X>;
-    return std::bit_cast<I>(x);
-}
-
-/**
- * @brief about_equal
- *
- * @tparam X
- * @param a
- * @param b
- * @param thr
- * @return auto (bool in scalar case, mask_t in vector case)
- */
-template<typename X>
-force_inline constexpr auto about_equal(X a, X b, X tol = 1e-6f)
-{
-    return cxm::abs(a - b) < tol;
-}
-
-static_assert(about_equal(1.f, 1 + 1e-7f));
-static_assert(about_equal(1.f, 1 + 1e-5f) == false);
-static_assert(about_equal(1.0, 1 + 1e-7));
-static_assert(about_equal(1.0, 1 + 1e-5) == false);
-
-/**
- * @brief fmod
- *
- * @tparam X
- * @param x
- * @param y
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto fmod(X x, X y) -> X
 {
@@ -242,13 +107,7 @@ force_inline constexpr auto fmod(X x, X y) -> X
 static_assert(about_equal(fmod(5.3, 2.0), 1.3));
 static_assert(about_equal(fmod(18.5f, 4.2f), 1.7f));
 
-/**
- * @brief wrap (0..<1)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto wrap(X x) -> X
 {
@@ -258,16 +117,7 @@ force_inline constexpr auto wrap(X x) -> X
 static_assert(about_equal(wrap(1.1), 0.1));
 static_assert(about_equal(wrap(2.3f), 0.3f));
 
-/**
- * @brief wrap (a..<b)
- *
- * @tparam X
- * @tparam B
- * @param x
- * @param a
- * @param b
- * @return X
- */
+///
 template<typename X, typename B>
 force_inline constexpr auto wrap(X x, B a, B b) -> X
 {
@@ -294,13 +144,9 @@ static_assert([]() {
     return about_equal(wrap(5 * pi, 0.f, 2 * pi), pi);
 }());
 
-/**
- * @brief cos (approx on -pi...pi)
- *
- * @tparam X
- * @param x
- * @return X
- */
+// MARK: - Trig Functions
+
+///
 template<typename X>
 force_inline constexpr auto cos(X x) -> X
 {
@@ -319,13 +165,7 @@ force_inline constexpr auto cos(X x) -> X
 
 static_assert(about_equal(cos(0.f), 1.f));
 
-/**
- * @brief sin (approx on -pi...pi)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto sin(X x) -> X
 {
@@ -343,13 +183,7 @@ force_inline constexpr auto sin(X x) -> X
 
 static_assert(about_equal(sin(0.f), 0.f));
 
-/**
- * @brief tan (approx on -pi/2...pi/2)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto tan(X x) -> X
 {
@@ -372,13 +206,9 @@ force_inline constexpr auto tan(X x) -> X
 
 static_assert(about_equal(tan(0.f), 0.f));
 
-/**
- * @brief cosh (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+// MARK: - Hyperbolic Trig Functions
+
+///
 template<typename X>
 force_inline constexpr auto cosh(X x) -> X
 {
@@ -399,13 +229,7 @@ force_inline constexpr auto cosh(X x) -> X
     return numer / denom;
 }
 
-/**
- * @brief sinh (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto sinh(X x) -> X
 {
@@ -426,13 +250,7 @@ force_inline constexpr auto sinh(X x) -> X
     return numer / denom;
 }
 
-/**
- * @brief tanh (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto tanh(X x) -> X
 {
@@ -453,13 +271,9 @@ force_inline constexpr auto tanh(X x) -> X
     return numer / denom;
 }
 
-/**
- * @brief exp2 (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+// MARK: - exp2, log2
+
+///
 template<typename X>
 force_inline constexpr auto exp2(X x) -> X
 {
@@ -467,12 +281,12 @@ force_inline constexpr auto exp2(X x) -> X
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
-    const auto int_part = cxm::round_to_int(x);
+    const auto int_part = float_to_signed(cxm::round(x));
     const auto dec_part = x - signed_to_float(int_part);
     
     // In C++20 we have two's complement.
     const auto val = (signed_to_unsigned(int_part) + exp_bias) << sig_bits;
-    const auto int_pow = cxm::reinterpret_as_float(val);
+    const auto int_pow = reinterpret_as_float(val);
     
     // minimax approximation of exp2 on -0.5...0.5
     // computed with cvxpy
@@ -502,13 +316,7 @@ static_assert(about_equal(exp2(1.0), 2.0));
 static_assert(about_equal(exp2(2.0), 4.0));
 static_assert(about_equal(exp2(3.5), 11.313708));
 
-/**
- * @brief log2 (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto log2(X x) -> X
 {
@@ -519,10 +327,10 @@ force_inline constexpr auto log2(X x) -> X
     constexpr auto sig_mask = (one << sig_bits) - one;
     
     // In C++ 20 we have two's complement.
-    const auto bits = cxm::reinterpret_as_int(x);
+    const auto bits = reinterpret_as_int(x);
     const auto val = unsigned_to_signed((bits >> sig_bits) - exp_bias);
     const auto int_part = signed_to_float(val);
-    const auto m = cxm::reinterpret_as_float((exp_bias << sig_bits) | (bits & sig_mask));
+    const auto m = reinterpret_as_float((exp_bias << sig_bits) | (bits & sig_mask));
 
     // Compute quadratic approximation of log2 on 1...2.
     // see: https://tech.ebayinc.com/engineering/fast-approximate-logarithms-part-i-the-basics/
@@ -557,13 +365,9 @@ static_assert(about_equal(log2(2.0), 1.0));
 static_assert(about_equal(log2(8.0), 3.0));
 static_assert(about_equal(log2(69.0), 6.108524, 1e-5));
 
-/**
- * @brief exp (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+// MARK: - exp, log, pow, etc.
+
+///
 template<typename X>
 force_inline constexpr auto exp(X x) -> X
 {
@@ -571,13 +375,7 @@ force_inline constexpr auto exp(X x) -> X
     return cxm::exp2(std::numbers::log2e_v<S> * x);
 }
 
-/**
- * @brief log (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto log(X x) -> X
 {
@@ -585,13 +383,7 @@ force_inline constexpr auto log(X x) -> X
     return std::numbers::ln2_v<S> * cxm::log2(x);
 }
 
-/**
- * @brief log10 (approx)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto log10(X x) -> X
 {
@@ -600,28 +392,14 @@ force_inline constexpr auto log10(X x) -> X
     return log10_2 * cxm::log2(x);
 }
 
-/**
- * @brief logB (approx)
- *
- * @tparam X
- * @param b
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto logB(X b, X x) -> X
 {
     return cxm::log2(x) / cxm::log2(b);
 }
 
-/**
- * @brief pow (approx)
- *
- * @tparam X
- * @param x
- * @param y
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
@@ -630,15 +408,9 @@ force_inline constexpr auto pow(X x, X y) -> X
 
 static_assert(about_equal(pow(2.f, 1.5f), 2.828427f));
 
-/**
- * @brief min
- *
- * @tparam X
- * @tparam C
- * @param a
- * @param b
- * @return X
- */
+// MARK: - Other
+
+///
 template<typename X, typename C>
 force_inline constexpr auto min(X a, C b) -> X
 {
@@ -647,15 +419,7 @@ force_inline constexpr auto min(X a, C b) -> X
 
 static_assert(min(-2, 5) == -2);
 
-/**
- * @brief max
- *
- * @tparam X
- * @tparam C
- * @param a
- * @param b
- * @return X
- */
+///
 template<typename X, typename C>
 force_inline constexpr auto max(X a, C b) -> X
 {
@@ -664,16 +428,7 @@ force_inline constexpr auto max(X a, C b) -> X
 
 static_assert(max(-2, 5) == 5);
 
-/**
- * @brief clamp
- *
- * @tparam X
- * @tparam C
- * @param x
- * @param a
- * @param b
- * @return X
- */
+///
 template<typename X, typename C>
 force_inline constexpr auto clamp(X x, C a, C b) -> X
 {
@@ -683,13 +438,7 @@ force_inline constexpr auto clamp(X x, C a, C b) -> X
 static_assert(clamp(-2, 0, 1) == 0);
 static_assert(clamp(5, 0, 1) == 1);
 
-/**
- * @brief sign (maybe not the fastest, but hey)
- *
- * @tparam X
- * @param x
- * @return X
- */
+///
 template<typename X>
 force_inline constexpr auto sign(X x) -> X
 {
@@ -700,7 +449,6 @@ static_assert(sign(2.f) == 1);
 static_assert(sign(-5) == -1);
 static_assert(sign(0.0) == 0);
 
-} // namespace cxm
-} // namespace vsl
+} // namespace vsl::cxm
 
 #endif /* _vsl_cxm_h */
