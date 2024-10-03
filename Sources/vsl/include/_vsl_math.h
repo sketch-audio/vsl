@@ -150,6 +150,48 @@ force_inline constexpr auto tan(X x) -> X
 }
 
 template<typename X, bool Cxm = false>
+force_inline constexpr auto asin(X x) -> X
+{
+    if constexpr (Cxm) {
+        return cxm::asin(x);
+    }
+    else if constexpr (is_vector_v<X>) {
+        return simd::asin(x);
+    }
+    else {
+        return std::asin(x);
+    }
+}
+
+template<typename X, bool Cxm = false>
+force_inline constexpr auto acos(X x) -> X
+{
+    if constexpr (Cxm) {
+        return cxm::acos(x);
+    }
+    else if constexpr (is_vector_v<X>) {
+        return simd::acos(x);
+    }
+    else {
+        return std::acos(x);
+    }
+}
+
+template<typename X, bool Cxm = false>
+force_inline constexpr auto atan(X x) -> X
+{
+    if constexpr (Cxm) {
+        return cxm::atan(x);
+    }
+    else if constexpr (is_vector_v<X>) {
+        return simd::atan(x);
+    }
+    else {
+        return std::atan(x);
+    }
+}
+
+template<typename X, bool Cxm = false>
 force_inline constexpr auto cosh(X x) -> X
 {
     if constexpr (Cxm) {

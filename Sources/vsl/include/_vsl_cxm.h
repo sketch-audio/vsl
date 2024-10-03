@@ -206,6 +206,64 @@ force_inline constexpr auto tan(X x) -> X
 
 static_assert(about_equal(tan(0.f), 0.f));
 
+// MARK: - Inverse Trig Functions
+
+///
+template<typename X>
+force_inline constexpr auto asin(X x) -> X
+{
+    constexpr auto a1 = X(1);
+    constexpr auto a3 = X(-1.27636876);
+    constexpr auto a5 = X(0.3993034);
+    constexpr auto a7 = X(-0.01937842);
+    constexpr auto b0 = X(1);
+    constexpr auto b2 = X(-1.44303543);
+    constexpr auto b4 = X(0.56480931);
+    constexpr auto b6 = X(-0.04992851);
+
+    const auto x2 = x * x;
+    
+    const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
+    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
+    
+    return numer / denom;
+}
+
+static_assert(about_equal(asin(0.f), 0.f));
+
+///
+template<typename X>
+force_inline constexpr auto acos(X x) -> X
+{
+    using S = scalar_t<X>;
+    return X(std::numbers::pi_v<S> / 2) - cxm::asin(x);
+}
+
+static_assert(about_equal(acos(0.f), std::numbers::pi_v<float> / 2));
+
+///
+template<typename X>
+force_inline constexpr auto atan(X x) -> X
+{
+    constexpr auto a1 = X(1);
+    constexpr auto a3 = X(1.28205128);
+    constexpr auto a5 = X(0.3958042);
+    constexpr auto a7 = X(0.01704962);
+    constexpr auto b0 = X(1);
+    constexpr auto b2 = X(1.61538462);
+    constexpr auto b4 = X(0.73426573);
+    constexpr auto b6 = X(0.08158508);
+
+    const auto x2 = x * x;
+    
+    const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
+    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
+    
+    return numer / denom;
+}
+
+static_assert(about_equal(atan(0.f), 0.f));
+
 // MARK: - Hyperbolic Trig Functions
 
 ///
