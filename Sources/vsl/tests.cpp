@@ -15,14 +15,14 @@ int main() {
     const auto arg_exp2 = vsl::float4(3.5f);
     const auto res_exp2 = vsl::cxm::exp2(arg_exp2);
     const auto ref_exp2 = vsl::float4(std::exp2(3.5f));
-    const auto mask_exp2 = vsl::about_equal(res_exp2, ref_exp2, tol);
+    const auto mask_exp2 = vsl::abs_equal(res_exp2, ref_exp2, tol);
     assert(vsl::all(mask_exp2 == true_mask));
 
     // log2
     const auto arg_log2 = vsl::float4(69.f);
     const auto res_log2 = vsl::cxm::log2(arg_log2);
     const auto ref_log2 = vsl::float4(std::log2(69.f));
-    const auto mask_log2 = vsl::about_equal(res_log2, ref_log2, tol);
+    const auto mask_log2 = vsl::abs_equal(res_log2, ref_log2, tol);
     assert(vsl::all(mask_log2 == true_mask));
 
     // MARK: - Test Random_gen

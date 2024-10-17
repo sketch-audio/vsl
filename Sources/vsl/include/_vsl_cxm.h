@@ -104,8 +104,8 @@ force_inline constexpr auto fmod(X x, X y) -> X
     return x - cxm::trunc(x / y) * y;
 }
 
-static_assert(about_equal(fmod(5.3, 2.0), 1.3));
-static_assert(about_equal(fmod(18.5f, 4.2f), 1.7f));
+static_assert(abs_equal(fmod(5.3, 2.0), 1.3));
+static_assert(abs_equal(fmod(18.5f, 4.2f), 1.7f, 1e-6f));
 
 ///
 template<typename X>
@@ -114,8 +114,8 @@ force_inline constexpr auto wrap(X x) -> X
     return x - cxm::floor(x);
 }
 
-static_assert(about_equal(wrap(1.1), 0.1));
-static_assert(about_equal(wrap(2.3f), 0.3f));
+static_assert(abs_equal(wrap(1.1), 0.1));
+static_assert(abs_equal(wrap(2.3f), 0.3f));
 
 ///
 template<typename X, typename B>
@@ -129,19 +129,19 @@ force_inline constexpr auto wrap(X x, B a, B b) -> X
 static_assert([]() {
     // -pi should wrap to pi on 0..<2 * pi
     constexpr auto pi = std::numbers::pi_v<float>;
-    return about_equal(wrap(-pi, 0.f, 2 * pi), pi);
+    return abs_equal(wrap(-pi, 0.f, 2 * pi), pi);
 }());
 
 static_assert([]() {
     // 2 * pi should wrap to 0 on -pi..<pi
     constexpr auto pi = std::numbers::pi_v<float>;
-    return about_equal(wrap(2 * pi, -pi, pi), 0.f);
+    return abs_equal(wrap(2 * pi, -pi, pi), 0.f);
 }());
 
 static_assert([]() {
     // 5 * pi should wrap to pi on 0..<2 * pi
     constexpr auto pi = std::numbers::pi_v<float>;
-    return about_equal(wrap(5 * pi, 0.f, 2 * pi), pi);
+    return abs_equal(wrap(5 * pi, 0.f, 2 * pi), pi);
 }());
 
 // MARK: - Trig Functions
@@ -163,7 +163,7 @@ force_inline constexpr auto cos(X x) -> X
     return c0 + x2 * (c2 + x2 * (c4 + x2 * (c6 + x2 * (c8 + x2 * (c10 + x2 * c12)))));
 }
 
-static_assert(about_equal(cos(0.f), 1.f));
+static_assert(abs_equal(cos(0.f), 1.f));
 
 ///
 template<typename X>
@@ -181,7 +181,7 @@ force_inline constexpr auto sin(X x) -> X
     return x * (c1 + x2 * (c3 + x2 * (c5 + x2 * (c7 + x2 * (c9 + x2 * c11)))));
 }
 
-static_assert(about_equal(sin(0.f), 0.f));
+static_assert(abs_equal(sin(0.f), 0.f));
 
 ///
 template<typename X>
@@ -204,7 +204,7 @@ force_inline constexpr auto tan(X x) -> X
     return numer / denom;
 }
 
-static_assert(about_equal(tan(0.f), 0.f));
+static_assert(abs_equal(tan(0.f), 0.f));
 
 // MARK: - Inverse Trig Functions
 
@@ -229,7 +229,7 @@ force_inline constexpr auto asin(X x) -> X
     return numer / denom;
 }
 
-static_assert(about_equal(asin(0.f), 0.f));
+static_assert(abs_equal(asin(0.f), 0.f));
 
 ///
 template<typename X>
@@ -239,7 +239,7 @@ force_inline constexpr auto acos(X x) -> X
     return X(std::numbers::pi_v<S> / 2) - cxm::asin(x);
 }
 
-static_assert(about_equal(acos(0.f), std::numbers::pi_v<float> / 2));
+static_assert(abs_equal(acos(0.f), std::numbers::pi_v<float> / 2));
 
 ///
 template<typename X>
@@ -262,7 +262,7 @@ force_inline constexpr auto atan(X x) -> X
     return numer / denom;
 }
 
-static_assert(about_equal(atan(0.f), 0.f));
+static_assert(abs_equal(atan(0.f), 0.f));
 
 // MARK: - Hyperbolic Trig Functions
 
@@ -360,19 +360,19 @@ force_inline constexpr auto exp2(X x) -> X
     return int_pow * dec_pow;
 }
 
-static_assert(about_equal(exp2(-3.f), 1 / 8.f));
-static_assert(about_equal(exp2(-1.f), 0.5f));
-static_assert(about_equal(exp2(0.f), 1.f));
-static_assert(about_equal(exp2(1.f), 2.f));
-static_assert(about_equal(exp2(2.f), 4.f));
-static_assert(about_equal(exp2(3.5f), 11.313708f));
+static_assert(abs_equal(exp2(-3.f), 1 / 8.f));
+static_assert(abs_equal(exp2(-1.f), 0.5f));
+static_assert(abs_equal(exp2(0.f), 1.f, 1e-6f));
+static_assert(abs_equal(exp2(1.f), 2.f, 1e-6f));
+static_assert(abs_equal(exp2(2.f), 4.f, 1e-6f));
+static_assert(abs_equal(exp2(3.5f), 11.313708f, 1e-6f));
 
-static_assert(about_equal(exp2(-3.0), 1 / 8.0));
-static_assert(about_equal(exp2(-1.0), 0.5));
-static_assert(about_equal(exp2(0.0), 1.0));
-static_assert(about_equal(exp2(1.0), 2.0));
-static_assert(about_equal(exp2(2.0), 4.0));
-static_assert(about_equal(exp2(3.5), 11.313708));
+static_assert(abs_equal(exp2(-3.0), 1 / 8.0));
+static_assert(abs_equal(exp2(-1.0), 0.5));
+static_assert(abs_equal(exp2(0.0), 1.0));
+static_assert(abs_equal(exp2(1.0), 2.0, 1e-6));
+static_assert(abs_equal(exp2(2.0), 4.0, 1e-6));
+static_assert(abs_equal(exp2(3.5), 11.313708, 1e-6));
 
 ///
 template<typename X>
@@ -409,19 +409,19 @@ force_inline constexpr auto log2(X x) -> X
     return int_part + dec_part;
 }
 
-static_assert(about_equal(log2(0.1f), -3.321928f, 1e-5f));
-static_assert(about_equal(log2(0.5f), -1.f));
-static_assert(about_equal(log2(1.f), 0.f));
-static_assert(about_equal(log2(2.f), 1.f));
-static_assert(about_equal(log2(8.f), 3.f));
-static_assert(about_equal(log2(69.f), 6.108524f, 1e-5f));
+static_assert(abs_equal(log2(0.1f), -3.321928f, 1e-5f));
+static_assert(abs_equal(log2(0.5f), -1.f));
+static_assert(abs_equal(log2(1.f), 0.f));
+static_assert(abs_equal(log2(2.f), 1.f));
+static_assert(abs_equal(log2(8.f), 3.f));
+static_assert(abs_equal(log2(69.f), 6.108524f, 1e-5f));
 
-static_assert(about_equal(log2(0.1), -3.321928, 1e-5));
-static_assert(about_equal(log2(0.5), -1.0));
-static_assert(about_equal(log2(1.0), 0.0));
-static_assert(about_equal(log2(2.0), 1.0));
-static_assert(about_equal(log2(8.0), 3.0));
-static_assert(about_equal(log2(69.0), 6.108524, 1e-5));
+static_assert(abs_equal(log2(0.1), -3.321928, 1e-5));
+static_assert(abs_equal(log2(0.5), -1.0));
+static_assert(abs_equal(log2(1.0), 0.0));
+static_assert(abs_equal(log2(2.0), 1.0));
+static_assert(abs_equal(log2(8.0), 3.0));
+static_assert(abs_equal(log2(69.0), 6.108524, 1e-5));
 
 // MARK: - exp, log, pow, etc.
 
@@ -464,7 +464,9 @@ force_inline constexpr auto pow(X x, X y) -> X
     return cxm::exp2(cxm::log2(x) * y);
 }
 
-static_assert(about_equal(pow(2.f, 1.5f), 2.828427f));
+static_assert(abs_equal(pow(2.f, 1.5f), 2.828427f, 1e-6f));
+static_assert(rel_equal(pow(10.f, -48 / 20.f), 0.00398f));
+static_assert(rel_equal(pow(10.f, 36 / 20.f), 63.09573f));
 
 // MARK: - Other
 

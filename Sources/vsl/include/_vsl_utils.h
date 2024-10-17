@@ -56,19 +56,6 @@ force_inline constexpr auto all(C cond) -> bool
 static_assert(all(true));
 static_assert(!all(false));
 
-/// About equal
-template<typename X>
-force_inline constexpr auto about_equal(X a, X b, X tol = 1e-6f)
-{
-    return (a - b) < tol & (b - a) < tol; // We don't have `abs` yet.
-}
-
-static_assert(about_equal(1.f, 1 + 1e-7f));
-static_assert(!about_equal(1.f, 1 + 1e-5f));
-static_assert(about_equal(1.0, 1 + 1e-7));
-static_assert(!about_equal(1.0, 1 + 1e-5));
-
-
 // MARK: - Casts
 
 ///
@@ -170,6 +157,65 @@ force_inline constexpr auto reinterpret_as_int(X x) -> uint_t<X>
     using I = unsigned_counterpart_t<X>;
     return std::bit_cast<I>(x);
 }
+
+// MARK: - Equality
+
+/// Are two numbers
+template<typename X>
+force_inline constexpr auto abs_equal(X a, X b, X tol = 1e-7f)
+{
+    return (a - b) < tol & (b - a) < tol; // We don't have `abs` yet.
+}
+
+static_assert(abs_equal(1.f, 1 + 1e-8f));
+static_assert(!abs_equal(1.f, 1 + 1e-5f));
+static_assert(abs_equal(1.0, 1 + 1e-8));
+static_assert(!abs_equal(1.0, 1 + 1e-5));
+
+///
+template<typename X>
+force_inline constexpr auto rel_equal(X a, X b, X tol = 1e-3f)
+{
+    return ((a - b) / b) < tol & ((b - a) / b) < tol;
+}
+
+static_assert(rel_equal(1.f, 1 + 1e-4f));
+static_assert(!rel_equal(1.f, 1 + 1e-2f));
+static_assert(rel_equal(100.1f, 100.f));
+static_assert(!rel_equal(101.f, 100.f));
+
+///
+template<Scalar X>
+force_inline constexpr auto bit_equal(X a, X b, uint_t<X> tol = 5) -> bool
+{
+    constexpr auto exp_bits = ieee_exp_bits_v<X>;
+    constexpr auto exp_bias = ieee_exp_bias_v<X>;
+    constexpr auto sig_bits = ieee_sig_bits_v<X>;
+    constexpr auto one = decltype(sig_bits){1};
+    constexpr auto sig_mask = (one << sig_bits) - one;
+    
+    const auto a_bits = reinterpret_as_int(a);
+    const auto b_bits = reinterpret_as_int(b);
+    
+    const auto a_exp = (a_bits >> sig_bits) - exp_bias;
+    const auto b_exp = (b_bits >> sig_bits) - exp_bias;
+    
+    if (a_exp != b_exp) {
+        return false;
+    }
+    
+    const auto a_sig = a_bits & sig_mask;
+    const auto b_sig = b_bits & sig_mask;
+    
+    const auto matching_bits = std::countl_zero((a_sig ^ b_sig) << (exp_bits + 1));
+    
+    return matching_bits >= tol;
+}
+
+static_assert(bit_equal(1.f, 1.01f, 6));
+static_assert(bit_equal(1.f, 1.1f, 3));
+static_assert(!bit_equal(200.f, 201.f, 7));
+static_assert(!bit_equal(200.f, 202.f, 6));
 
 // MARK: - Masks
 
