@@ -1,23 +1,20 @@
 #ifndef _vsl_math_h
 #define _vsl_math_h
 
-#include <algorithm>
+#include <algorithm> // min, max, clamp
 #include <cmath>
 
 #include <simd/simd.h>
 
 #include "_vsl_core.h"
-#include "_vsl_cxm.h"
+#include "_vsl_cxm.h" // sign, wrap
 
 namespace vsl {
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto abs(X x) -> X
+template<typename X>
+force_inline auto abs(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::abs(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::abs(x);
     }
     else {
@@ -25,13 +22,10 @@ force_inline constexpr auto abs(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto trunc(X x) -> X
+template<typename X>
+force_inline auto trunc(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::trunc(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::trunc(x);
     }
     else {
@@ -39,13 +33,10 @@ force_inline constexpr auto trunc(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto floor(X x) -> X
+template<typename X>
+force_inline auto floor(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::floor(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::floor(x);
     }
     else {
@@ -53,13 +44,10 @@ force_inline constexpr auto floor(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto ceil(X x) -> X
+template<typename X>
+force_inline auto ceil(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::ceil(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::ceil(x);
     }
     else {
@@ -67,13 +55,10 @@ force_inline constexpr auto ceil(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto round(X x) -> X
+template<typename X>
+force_inline auto round(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::round(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::round(x);
     }
     else {
@@ -81,13 +66,10 @@ force_inline constexpr auto round(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto fmod(X x, X y) -> X
+template<typename X>
+force_inline auto fmod(X x, X y) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::fmod(x, y);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::fmod(x, y);
     }
     else {
@@ -96,24 +78,9 @@ force_inline constexpr auto fmod(X x, X y) -> X
 }
 
 template<typename X>
-force_inline constexpr auto wrap(X x) -> X
+force_inline auto cos(X x) -> X
 {
-    return cxm::wrap(x);
-}
-
-template<typename X, typename B>
-force_inline constexpr auto wrap(X x, B a, B b) -> X
-{
-    return cxm::wrap(x, a, b);
-}
-
-template<typename X, bool Cxm = false>
-force_inline constexpr auto cos(X x) -> X
-{
-    if constexpr (Cxm) {
-        return cxm::cos(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::cos(x);
     }
     else {
@@ -121,13 +88,10 @@ force_inline constexpr auto cos(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto sin(X x) -> X
+template<typename X>
+force_inline auto sin(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::sin(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::sin(x);
     }
     else {
@@ -135,13 +99,10 @@ force_inline constexpr auto sin(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto tan(X x) -> X
+template<typename X>
+force_inline auto tan(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::tan(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::tan(x);
     }
     else {
@@ -149,27 +110,10 @@ force_inline constexpr auto tan(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto asin(X x) -> X
+template<typename X>
+force_inline auto acos(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::asin(x);
-    }
-    else if constexpr (is_vector_v<X>) {
-        return simd::asin(x);
-    }
-    else {
-        return std::asin(x);
-    }
-}
-
-template<typename X, bool Cxm = false>
-force_inline constexpr auto acos(X x) -> X
-{
-    if constexpr (Cxm) {
-        return cxm::acos(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::acos(x);
     }
     else {
@@ -177,13 +121,21 @@ force_inline constexpr auto acos(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto atan(X x) -> X
+template<typename X>
+force_inline auto asin(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::atan(x);
+    if constexpr (is_vector_v<X>) {
+        return simd::asin(x);
     }
-    else if constexpr (is_vector_v<X>) {
+    else {
+        return std::asin(x);
+    }
+}
+
+template<typename X>
+force_inline auto atan(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
         return simd::atan(x);
     }
     else {
@@ -191,13 +143,10 @@ force_inline constexpr auto atan(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto cosh(X x) -> X
+template<typename X>
+force_inline auto cosh(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::cosh(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::cosh(x);
     }
     else {
@@ -205,13 +154,10 @@ force_inline constexpr auto cosh(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto sinh(X x) -> X
+template<typename X>
+force_inline auto sinh(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::sinh(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::sinh(x);
     }
     else {
@@ -219,13 +165,10 @@ force_inline constexpr auto sinh(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto tanh(X x) -> X
+template<typename X>
+force_inline auto tanh(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::tanh(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::tanh(x);
     }
     else {
@@ -233,13 +176,54 @@ force_inline constexpr auto tanh(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto exp2(X x) -> X
+template<typename X>
+force_inline auto acosh(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::exp2(x);
+    if constexpr (is_vector_v<X>) {
+        return simd::acosh(x);
     }
-    else if constexpr (is_vector_v<X>) {
+    else {
+        return std::acosh(x);
+    }
+}
+
+template<typename X>
+force_inline auto asinh(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return simd::asinh(x);
+    }
+    else {
+        return std::asinh(x);
+    }
+}
+
+template<typename X>
+force_inline auto atanh(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return simd::atanh(x);
+    }
+    else {
+        return std::atanh(x);
+    }
+}
+
+template<typename X>
+force_inline auto erf(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return simd::erf(x);
+    }
+    else {
+        return std::erf(x);
+    }
+}
+
+template<typename X>
+force_inline auto exp2(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
         return simd::exp2(x);
     }
     else {
@@ -247,13 +231,10 @@ force_inline constexpr auto exp2(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto log2(X x) -> X
+template<typename X>
+force_inline auto log2(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::log2(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::log2(x);
     }
     else {
@@ -261,13 +242,10 @@ force_inline constexpr auto log2(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto exp(X x) -> X
+template<typename X>
+force_inline auto exp(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::exp(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::exp(x);
     }
     else {
@@ -275,13 +253,10 @@ force_inline constexpr auto exp(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto log(X x) -> X
+template<typename X>
+force_inline auto log(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::log(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::log(x);
     }
     else {
@@ -289,13 +264,10 @@ force_inline constexpr auto log(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto log10(X x) -> X
+template<typename X>
+force_inline auto log10(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::log10(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::log10(x);
     }
     else {
@@ -303,13 +275,10 @@ force_inline constexpr auto log10(X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto logB(X b, X x) -> X
+template<typename X>
+force_inline auto logB(X b, X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::logB(b, x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::log2(x) / simd::log2(b);
     }
     else {
@@ -317,13 +286,10 @@ force_inline constexpr auto logB(X b, X x) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto pow(X x, X y) -> X
+template<typename X>
+force_inline auto pow(X x, X y) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::pow(x, y);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::pow(x, y);
     }
     else {
@@ -331,13 +297,10 @@ force_inline constexpr auto pow(X x, X y) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto sqrt(X x) -> X
+template<typename X>
+force_inline auto sqrt(X x) -> X
 {
-    if constexpr (Cxm) {
-        static_assert(deferred_false_v<X>, "cxm sqrt not implemented yet");
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::sqrt(x);
     }
     else {
@@ -345,13 +308,21 @@ force_inline constexpr auto sqrt(X x) -> X
     }
 }
 
-template<typename X, typename C, bool Cxm = false>
-force_inline constexpr auto min(X a, C b) -> X
+template<typename X>
+force_inline auto cbrt(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::min(a, b);
+    if constexpr (is_vector_v<X>) {
+        return simd::cbrt(x);
     }
-    else if constexpr (is_vector_v<X>) {
+    else {
+        return std::cbrt(x);
+    }
+}
+
+template<typename X, typename C>
+force_inline auto min(X a, C b) -> X
+{
+    if constexpr (is_vector_v<X>) {
         return simd::min(a, X(b));
     }
     else {
@@ -359,13 +330,10 @@ force_inline constexpr auto min(X a, C b) -> X
     }
 }
 
-template<typename X, typename C, bool Cxm = false>
-force_inline constexpr auto max(X a, C b) -> X
+template<typename X, typename C>
+force_inline auto max(X a, C b) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::max(a, b);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::max(a, X(b));
     }
     else {
@@ -373,13 +341,10 @@ force_inline constexpr auto max(X a, C b) -> X
     }
 }
 
-template<typename X, typename C, bool Cxm = false>
-force_inline constexpr auto clamp(X x, C a, C b) -> X
+template<typename X, typename C>
+force_inline auto clamp(X x, C a, C b) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::clamp(x, a, b);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::clamp(x, X(a), X(b));
     }
     else {
@@ -387,18 +352,27 @@ force_inline constexpr auto clamp(X x, C a, C b) -> X
     }
 }
 
-template<typename X, bool Cxm = false>
-force_inline constexpr auto sign(X x) -> X
+template<typename X>
+force_inline auto sign(X x) -> X
 {
-    if constexpr (Cxm) {
-        return cxm::sign(x);
-    }
-    else if constexpr (is_vector_v<X>) {
+    if constexpr (is_vector_v<X>) {
         return simd::sign(x);
     }
     else {
-        return (x > 0) ? 1 : ((x < 0) ? -1 : 0);
+        return cxm::sign(x);
     }
+}
+
+template<typename X>
+force_inline auto wrap(X x) -> X
+{
+    return cxm::wrap(x);
+}
+
+template<typename X, typename B>
+force_inline auto wrap(X x, B a, B b) -> X
+{
+    return cxm::wrap(x, a, b);
 }
 
 } // namespace vsl
