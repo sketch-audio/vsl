@@ -16,4 +16,7 @@
 // simd-compatible random with mask reset
 #include "_vsl_rand.h"
 
+// complex numbers with basic arithmetic
+#include "_vsl_complex.h"
+
 #endif /* vsl_h */
