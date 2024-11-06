@@ -244,14 +244,47 @@ force_inline auto bool_to_mask(X x)
 }
 
 ///
-template<FloatingPoint X>
-force_inline auto mask_for_lane(size_t i) -> mask_t<X>
+template<typename X>
+force_inline auto mask_for_member(size_t i) -> mask_t<X>
 {
-    static_assert(is_vector_v<X>, "Can't use mask_for_lane in scalar code.");
-    auto mask = mask_t<X>(0);
-    mask[i % num_members_v<X>] = -1;
-    return mask;
+    if constexpr (is_vector_v<X>) {
+        auto mask = mask_t<X>(0);
+        mask[i % num_members_v<X>] = -1;
+        return mask;
+    } else {
+        return -1;
+    }
 }
+
+// MARK: - Members
+
+///
+template<typename X>
+force_inline auto get_member(X x, size_t i) -> scalar_t<X>
+{
+    if constexpr (is_vector_v<X>) {
+        return x[i % num_members_v<X>];
+    }
+    else {
+        return x;
+    }
+}
+
+// MARK: - Conversions
+
+///
+template<typename X>
+force_inline auto reduce_add(X x) -> scalar_t<X>
+{
+    if constexpr (is_vector_v<X>) {
+        return simd::reduce_add(x);
+    }
+    else {
+        return x;
+    }
+}
+
+
 
 } // namespace vsl
 
