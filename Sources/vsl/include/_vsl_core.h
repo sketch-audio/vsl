@@ -393,42 +393,36 @@ using signed_eq_t = typename signed_eq<T>::type;
 
 /**
  * @brief Checks if T is an unsigned scalar or vector type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept Unsigned = is_unsigned_v<T>;
 
 /**
  * @brief Checks if T is a signed scalar or vector type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept Signed = is_signed_v<T>;
 
 /**
  * @brief Checks if T is an integral scalar or vector type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept Integral = is_integral_v<T>;
 
 /**
  * @brief Checks if T is a floating-point scalar or vector type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept FloatingPoint = is_floating_point_v<T>;
 
 /**
  * @brief Checks if T is a scalar type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept Scalar = is_scalar_v<T>;
 
 /**
  * @brief Checks if T is a vector type.
- * @tparam T The type to check.
  */
 template<typename T>
 concept Vector = is_vector_v<T>;
@@ -456,7 +450,6 @@ using uint_t = unsigned_counterpart_t<T>;
 
 /**
  * @brief Get the number of members in a vector type. (Returns 1 for scalar types.)
- * @tparam T 
  */
 template<typename T>
 struct num_members { static constexpr auto value{sizeof(T) / sizeof(scalar_t<T>)}; };
