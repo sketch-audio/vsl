@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
-#include "vsl.h"
+#include "vsl/vsl.h"
 
 #include "test_helpers.h"
 

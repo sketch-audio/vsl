@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include "vsl.h"
+#include "vsl/vsl.h"
 
 inline auto test_float64x2() -> void
 {

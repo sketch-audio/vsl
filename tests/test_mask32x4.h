@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include "vsl.h"
+#include "vsl/vsl.h"
 
 inline auto test_mask32x4() -> void
 {

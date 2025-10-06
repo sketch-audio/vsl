@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include "vsl.h"
+#include "vsl/vsl.h"
 
 template<typename S, typename V, vsl::Random_engine Engine>
 inline auto test_engine() -> void
