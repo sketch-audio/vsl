@@ -276,6 +276,7 @@ public:
     mask64x2() noexcept = default;
     mask64x2(Scalar x) noexcept : data{make_vector(x)} {}
     mask64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
+    mask64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
     mask64x2(Vector x) noexcept : data{x} {}
 
     auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
@@ -525,6 +526,7 @@ public:
     float64x2() noexcept = default;
     float64x2(Scalar x) noexcept : data{make_vector(x)} {}
     float64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
+    float64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
     float64x2(Vector x) noexcept : data{x} {}
 
     auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
@@ -795,6 +797,7 @@ public:
     mask32x4() noexcept = default;
     mask32x4(Scalar x) noexcept : data{make_vector(x)} {}
     mask32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
+    mask32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
     mask32x4(Vector x) noexcept : data{x} {}
 
     auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
@@ -1041,6 +1044,7 @@ public:
     float32x4() noexcept = default;
     float32x4(Scalar x) noexcept : data{make_vector(x)} {}
     float32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
+    float32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
     float32x4(Vector x) noexcept : data{x} {}
 
     auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
