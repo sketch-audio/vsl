@@ -11,6 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(vsl INTERFACE)
 target_include_directories(vsl INTERFACE include)
 
+if(MSVC)
+    target_compile_options(vsl INTERFACE /arch:SSE4.2)
+else()
+    target_compile_options(vsl INTERFACE -msse4.2 -Wno-unused-command-line-argument) # Needed for universal build.
+endif()
+
 if(PROJECT_IS_TOP_LEVEL)
     add_subdirectory(tests)
 endif()
