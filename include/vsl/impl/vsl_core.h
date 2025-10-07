@@ -268,4 +268,15 @@ struct ieee_exp_bits<double> : std::integral_constant<uint64_t, 11> {};
 template<typename T>
 inline constexpr auto ieee_exp_bits_v = ieee_exp_bits<T>::value;
 
+// MARK: - num members
+
+template<typename T>
+struct num_members { static constexpr auto value{sizeof(T) / sizeof(scalar_t<T>)}; };
+
+template<typename T>
+inline constexpr auto num_members_v = num_members<T>::value;
+
+static_assert(num_members_v<float> == 1);
+static_assert(num_members_v<float32x4> == 4);
+
 } // namespace vsl
