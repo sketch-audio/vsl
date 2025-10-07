@@ -1,5 +1,6 @@
 #pragma once
 
+#include "impl/vsl_complex.h"
 #include "impl/vsl_conv.h"
 #include "impl/vsl_core.h"
 #include "impl/vsl_impl.h" // Intrinsic implementation
