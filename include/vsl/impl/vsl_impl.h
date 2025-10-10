@@ -273,43 +273,43 @@ private:
     }
 
 public:
-    mask64x2() noexcept = default;
-    mask64x2(Scalar x) noexcept : data{make_vector(x)} {}
-    mask64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
-    mask64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
-    mask64x2(Vector x) noexcept : data{x} {}
+    force_inline mask64x2() noexcept = default;
+    force_inline mask64x2(Scalar x) noexcept : data{make_vector(x)} {}
+    force_inline mask64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
+    force_inline mask64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
+    force_inline mask64x2(Vector x) noexcept : data{x} {}
 
-    auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
+    force_inline auto vector_call operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
 
-    friend auto operator+(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return add(lhs.data, rhs.data); }
-    friend auto operator-(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return sub(lhs.data, rhs.data); }
-    friend auto operator*(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return mul(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator+(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return add(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator-(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return sub(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator*(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return mul(lhs.data, rhs.data); }
 
-    auto operator+=(const mask64x2& other) noexcept -> mask64x2& { data = add(data, other.data); return *this; }
-    auto operator-=(const mask64x2& other) noexcept -> mask64x2& { data = sub(data, other.data); return *this; }
-    auto operator*=(const mask64x2& other) noexcept -> mask64x2& { data = mul(data, other.data); return *this; }
+    force_inline auto vector_call operator+=(const mask64x2& other) noexcept -> mask64x2& { data = add(data, other.data); return *this; }
+    force_inline auto vector_call operator-=(const mask64x2& other) noexcept -> mask64x2& { data = sub(data, other.data); return *this; }
+    force_inline auto vector_call operator*=(const mask64x2& other) noexcept -> mask64x2& { data = mul(data, other.data); return *this; }
 
-    friend auto operator&(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_and(lhs.data, rhs.data); }
-    friend auto operator|(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_or(lhs.data, rhs.data); }
-    friend auto operator^(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_xor(lhs.data, rhs.data); }
-    friend auto operator~(const mask64x2& x) noexcept -> mask64x2 { return bit_not(x.data); }
+    friend force_inline auto vector_call operator&(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_and(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator|(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_or(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator^(const mask64x2& lhs, const mask64x2& rhs) noexcept -> mask64x2 { return bit_xor(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator~(const mask64x2& x) noexcept -> mask64x2 { return bit_not(x.data); }
 
-    auto operator&=(const mask64x2& other) noexcept -> mask64x2& { data = bit_and(data, other.data); return *this; }
-    auto operator|=(const mask64x2& other) noexcept -> mask64x2& { data = bit_or(data, other.data); return *this; }
-    auto operator^=(const mask64x2& other) noexcept -> mask64x2& { data = bit_xor(data, other.data); return *this; }
+    force_inline auto vector_call operator&=(const mask64x2& other) noexcept -> mask64x2& { data = bit_and(data, other.data); return *this; }
+    force_inline auto vector_call operator|=(const mask64x2& other) noexcept -> mask64x2& { data = bit_or(data, other.data); return *this; }
+    force_inline auto vector_call operator^=(const mask64x2& other) noexcept -> mask64x2& { data = bit_xor(data, other.data); return *this; }
 
-    auto operator>>(int n) const noexcept -> mask64x2 { return rshift(data, n); }
-    auto operator<<(int n) const noexcept -> mask64x2 { return lshift(data, n); }
+    force_inline auto vector_call operator>>(int n) const noexcept -> mask64x2 { return rshift(data, n); }
+    force_inline auto vector_call operator<<(int n) const noexcept -> mask64x2 { return lshift(data, n); }
 
-    auto operator>>=(int n) noexcept -> mask64x2& { data = rshift(data, n); return *this; }
-    auto operator<<=(int n) noexcept -> mask64x2& { data = lshift(data, n); return *this; }
+    force_inline auto vector_call operator>>=(int n) noexcept -> mask64x2& { data = rshift(data, n); return *this; }
+    force_inline auto vector_call operator<<=(int n) noexcept -> mask64x2& { data = lshift(data, n); return *this; }
 
-    auto operator==(const mask64x2& other) const noexcept -> mask64x2 { return equal(data, other.data); }
-    auto operator!=(const mask64x2& other) const noexcept -> mask64x2 { return not_equal(data, other.data); }
-    auto operator<(const mask64x2& other) const noexcept -> mask64x2 { return less(data, other.data); }
-    auto operator<=(const mask64x2& other) const noexcept -> mask64x2 { return less_equal(data, other.data); }
-    auto operator>(const mask64x2& other) const noexcept -> mask64x2 { return greater(data, other.data); }
-    auto operator>=(const mask64x2& other) const noexcept -> mask64x2 { return greater_equal(data, other.data); }
+    force_inline auto vector_call operator==(const mask64x2& other) const noexcept -> mask64x2 { return equal(data, other.data); }
+    force_inline auto vector_call operator!=(const mask64x2& other) const noexcept -> mask64x2 { return not_equal(data, other.data); }
+    force_inline auto vector_call operator<(const mask64x2& other) const noexcept -> mask64x2 { return less(data, other.data); }
+    force_inline auto vector_call operator<=(const mask64x2& other) const noexcept -> mask64x2 { return less_equal(data, other.data); }
+    force_inline auto vector_call operator>(const mask64x2& other) const noexcept -> mask64x2 { return greater(data, other.data); }
+    force_inline auto vector_call operator>=(const mask64x2& other) const noexcept -> mask64x2 { return greater_equal(data, other.data); }
 
     static force_inline auto vector_call select(mask64x2 mask, mask64x2 val_t, mask64x2 val_f) -> mask64x2 { return select(mask.data, val_t.data, val_f.data); }
     static force_inline auto vector_call any(mask64x2 x) -> bool { return any(x.data); }
@@ -523,33 +523,33 @@ private:
     }
 
 public:
-    float64x2() noexcept = default;
-    float64x2(Scalar x) noexcept : data{make_vector(x)} {}
-    float64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
-    float64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
-    float64x2(Vector x) noexcept : data{x} {}
+    force_inline float64x2() noexcept = default;
+    force_inline float64x2(Scalar x) noexcept : data{make_vector(x)} {}
+    force_inline float64x2(Scalar x0, Scalar x1) noexcept : data{make_vector(Scalar_arr{{x0, x1}})} {}
+    force_inline float64x2(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
+    force_inline float64x2(Vector x) noexcept : data{x} {}
 
-    auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
+    force_inline auto vector_call operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
 
-    friend auto operator+(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return add(lhs.data, rhs.data); }
-    friend auto operator-(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return sub(lhs.data, rhs.data); }
-    friend auto operator*(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return mul(lhs.data, rhs.data); }
-    friend auto operator/(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return div(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator+(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return add(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator-(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return sub(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator*(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return mul(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator/(const float64x2& lhs, const float64x2& rhs) noexcept -> float64x2 { return div(lhs.data, rhs.data); }
 
-    auto operator+=(const float64x2& other) noexcept -> float64x2& { data = add(data, other.data); return *this; }
-    auto operator-=(const float64x2& other) noexcept -> float64x2& { data = sub(data, other.data); return *this; }
-    auto operator*=(const float64x2& other) noexcept -> float64x2& { data = mul(data, other.data); return *this; }
-    auto operator/=(const float64x2& other) noexcept -> float64x2& { data = div(data, other.data); return *this; }
+    force_inline auto vector_call operator+=(const float64x2& other) noexcept -> float64x2& { data = add(data, other.data); return *this; }
+    force_inline auto vector_call operator-=(const float64x2& other) noexcept -> float64x2& { data = sub(data, other.data); return *this; }
+    force_inline auto vector_call operator*=(const float64x2& other) noexcept -> float64x2& { data = mul(data, other.data); return *this; }
+    force_inline auto vector_call operator/=(const float64x2& other) noexcept -> float64x2& { data = div(data, other.data); return *this; }
 
-    auto operator+() const noexcept -> float64x2 { return *this; }
-    auto operator-() const noexcept -> float64x2 { return neg(data); }
+    force_inline auto vector_call operator+() const noexcept -> float64x2 { return *this; }
+    force_inline auto vector_call operator-() const noexcept -> float64x2 { return neg(data); }
 
-    friend auto operator==(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return equal(a.data, b.data); }
-    friend auto operator!=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return not_equal(a.data, b.data); }
-    friend auto operator<(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return less(a.data, b.data); }
-    friend auto operator<=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return less_equal(a.data, b.data); }
-    friend auto operator>(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return greater(a.data, b.data); }
-    friend auto operator>=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return greater_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator==(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return equal(a.data, b.data); }
+    friend force_inline auto vector_call operator!=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return not_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator<(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return less(a.data, b.data); }
+    friend force_inline auto vector_call operator<=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return less_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator>(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return greater(a.data, b.data); }
+    friend force_inline auto vector_call operator>=(const float64x2& a, const float64x2& b) noexcept -> mask64x2 { return greater_equal(a.data, b.data); }
 
     static force_inline auto vector_call select(mask64x2 mask, float64x2 val_t, float64x2 val_f) noexcept -> float64x2 { return select(mask.data, val_t.data, val_f.data); }
 
@@ -794,43 +794,43 @@ private:
     }
 
 public:
-    mask32x4() noexcept = default;
-    mask32x4(Scalar x) noexcept : data{make_vector(x)} {}
-    mask32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
-    mask32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
-    mask32x4(Vector x) noexcept : data{x} {}
+    force_inline mask32x4() noexcept = default;
+    force_inline mask32x4(Scalar x) noexcept : data{make_vector(x)} {}
+    force_inline mask32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
+    force_inline mask32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
+    force_inline mask32x4(Vector x) noexcept : data{x} {}
 
-    auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
+    force_inline auto vector_call operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
 
-    friend auto operator+(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return add(lhs.data, rhs.data); }
-    friend auto operator-(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return sub(lhs.data, rhs.data); }
-    friend auto operator*(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return mul(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator+(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return add(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator-(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return sub(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator*(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return mul(lhs.data, rhs.data); }
 
-    auto operator+=(const mask32x4& other) noexcept -> mask32x4& { data = add(data, other.data); return *this; }
-    auto operator-=(const mask32x4& other) noexcept -> mask32x4& { data = sub(data, other.data); return *this; }
-    auto operator*=(const mask32x4& other) noexcept -> mask32x4& { data = mul(data, other.data); return *this; }
+    force_inline auto vector_call operator+=(const mask32x4& other) noexcept -> mask32x4& { data = add(data, other.data); return *this; }
+    force_inline auto vector_call operator-=(const mask32x4& other) noexcept -> mask32x4& { data = sub(data, other.data); return *this; }
+    force_inline auto vector_call operator*=(const mask32x4& other) noexcept -> mask32x4& { data = mul(data, other.data); return *this; }
 
-    friend auto operator&(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_and(lhs.data, rhs.data); }
-    friend auto operator|(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_or(lhs.data, rhs.data); }
-    friend auto operator^(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_xor(lhs.data, rhs.data); }
-    friend auto operator~(const mask32x4& x) noexcept -> mask32x4 { return bit_not(x.data); }
+    friend force_inline auto vector_call operator&(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_and(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator|(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_or(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator^(const mask32x4& lhs, const mask32x4& rhs) noexcept -> mask32x4 { return bit_xor(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator~(const mask32x4& x) noexcept -> mask32x4 { return bit_not(x.data); }
 
-    auto operator&=(const mask32x4& other) noexcept -> mask32x4& { data = bit_and(data, other.data); return *this; }
-    auto operator|=(const mask32x4& other) noexcept -> mask32x4& { data = bit_or(data, other.data); return *this; }
-    auto operator^=(const mask32x4& other) noexcept -> mask32x4& { data = bit_xor(data, other.data); return *this; }
+    force_inline auto vector_call operator&=(const mask32x4& other) noexcept -> mask32x4& { data = bit_and(data, other.data); return *this; }
+    force_inline auto vector_call operator|=(const mask32x4& other) noexcept -> mask32x4& { data = bit_or(data, other.data); return *this; }
+    force_inline auto vector_call operator^=(const mask32x4& other) noexcept -> mask32x4& { data = bit_xor(data, other.data); return *this; }
 
-    auto operator>>(int n) const noexcept -> mask32x4 { return rshift(data, n); }
-    auto operator<<(int n) const noexcept -> mask32x4 { return lshift(data, n); }
+    force_inline auto vector_call operator>>(int n) const noexcept -> mask32x4 { return rshift(data, n); }
+    force_inline auto vector_call operator<<(int n) const noexcept -> mask32x4 { return lshift(data, n); }
 
-    auto operator>>=(int n) noexcept -> mask32x4& { data = rshift(data, n); return *this; }
-    auto operator<<=(int n) noexcept -> mask32x4& { data = lshift(data, n); return *this; }
+    force_inline auto vector_call operator>>=(int n) noexcept -> mask32x4& { data = rshift(data, n); return *this; }
+    force_inline auto vector_call operator<<=(int n) noexcept -> mask32x4& { data = lshift(data, n); return *this; }
 
-    auto operator==(const mask32x4& other) const noexcept -> mask32x4 { return equal(data, other.data); }
-    auto operator!=(const mask32x4& other) const noexcept -> mask32x4 { return not_equal(data, other.data); }
-    auto operator<(const mask32x4& other) const noexcept -> mask32x4 { return less(data, other.data); }
-    auto operator<=(const mask32x4& other) const noexcept -> mask32x4 { return less_equal(data, other.data); }
-    auto operator>(const mask32x4& other) const noexcept -> mask32x4 { return greater(data, other.data); }
-    auto operator>=(const mask32x4& other) const noexcept -> mask32x4 { return greater_equal(data, other.data); }
+    force_inline auto vector_call operator==(const mask32x4& other) const noexcept -> mask32x4 { return equal(data, other.data); }
+    force_inline auto vector_call operator!=(const mask32x4& other) const noexcept -> mask32x4 { return not_equal(data, other.data); }
+    force_inline auto vector_call operator<(const mask32x4& other) const noexcept -> mask32x4 { return less(data, other.data); }
+    force_inline auto vector_call operator<=(const mask32x4& other) const noexcept -> mask32x4 { return less_equal(data, other.data); }
+    force_inline auto vector_call operator>(const mask32x4& other) const noexcept -> mask32x4 { return greater(data, other.data); }
+    force_inline auto vector_call operator>=(const mask32x4& other) const noexcept -> mask32x4 { return greater_equal(data, other.data); }
 
     static force_inline auto vector_call select(mask32x4 mask, mask32x4 val_t, mask32x4 val_f) -> mask32x4 { return select(mask.data, val_t.data, val_f.data); }
     static force_inline auto vector_call any(mask32x4 x) -> bool { return any(x.data); }
@@ -1041,33 +1041,33 @@ private:
     }
 
 public:
-    float32x4() noexcept = default;
-    float32x4(Scalar x) noexcept : data{make_vector(x)} {}
-    float32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
-    float32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
-    float32x4(Vector x) noexcept : data{x} {}
+    force_inline float32x4() noexcept = default;
+    force_inline float32x4(Scalar x) noexcept : data{make_vector(x)} {}
+    force_inline float32x4(Scalar x0, Scalar x1, Scalar x2, Scalar x3) noexcept : data{make_vector(Scalar_arr{{x0, x1, x2, x3}})} {}
+    force_inline float32x4(const Scalar_arr& arr) noexcept : data{make_vector(arr)} {}
+    force_inline float32x4(Vector x) noexcept : data{x} {}
 
-    auto operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
+    force_inline auto vector_call operator[](size_t i) const noexcept -> Scalar { return access(data, i); }
 
-    friend auto operator+(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return add(lhs.data, rhs.data); }
-    friend auto operator-(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return sub(lhs.data, rhs.data); }
-    friend auto operator*(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return mul(lhs.data, rhs.data); }
-    friend auto operator/(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return div(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator+(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return add(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator-(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return sub(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator*(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return mul(lhs.data, rhs.data); }
+    friend force_inline auto vector_call operator/(const float32x4& lhs, const float32x4& rhs) noexcept -> float32x4 { return div(lhs.data, rhs.data); }
 
-    auto operator+=(const float32x4& other) noexcept -> float32x4& { data = add(data, other.data); return *this; }
-    auto operator-=(const float32x4& other) noexcept -> float32x4& { data = sub(data, other.data); return *this; }
-    auto operator*=(const float32x4& other) noexcept -> float32x4& { data = mul(data, other.data); return *this; }
-    auto operator/=(const float32x4& other) noexcept -> float32x4& { data = div(data, other.data); return *this; }
+    force_inline auto vector_call operator+=(const float32x4& other) noexcept -> float32x4& { data = add(data, other.data); return *this; }
+    force_inline auto vector_call operator-=(const float32x4& other) noexcept -> float32x4& { data = sub(data, other.data); return *this; }
+    force_inline auto vector_call operator*=(const float32x4& other) noexcept -> float32x4& { data = mul(data, other.data); return *this; }
+    force_inline auto vector_call operator/=(const float32x4& other) noexcept -> float32x4& { data = div(data, other.data); return *this; }
 
-    auto operator+() const noexcept -> float32x4 { return *this; }
-    auto operator-() const noexcept -> float32x4 { return neg(data); }
+    force_inline auto vector_call operator+() const noexcept -> float32x4 { return *this; }
+    force_inline auto vector_call operator-() const noexcept -> float32x4 { return neg(data); }
 
-    friend auto operator==(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return equal(a.data, b.data); }
-    friend auto operator!=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return not_equal(a.data, b.data); }
-    friend auto operator<(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return less(a.data, b.data); }
-    friend auto operator<=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return less_equal(a.data, b.data); }
-    friend auto operator>(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return greater(a.data, b.data); }
-    friend auto operator>=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return greater_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator==(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return equal(a.data, b.data); }
+    friend force_inline auto vector_call operator!=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return not_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator<(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return less(a.data, b.data); }
+    friend force_inline auto vector_call operator<=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return less_equal(a.data, b.data); }
+    friend force_inline auto vector_call operator>(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return greater(a.data, b.data); }
+    friend force_inline auto vector_call operator>=(const float32x4& a, const float32x4& b) noexcept -> mask32x4 { return greater_equal(a.data, b.data); }
 
     static force_inline auto vector_call select(mask32x4 mask, float32x4 val_t, float32x4 val_f) noexcept -> float32x4 { return select(mask.data, val_t.data, val_f.data); }
 
