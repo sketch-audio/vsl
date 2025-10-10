@@ -563,7 +563,7 @@ force_inline constexpr auto logB(X b, X x) -> X
 template<typename X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
-    return exp2(log2(x) * y);
+    return vsl::select(x <= 0, X{}, exp2(log2(x) * y)); // Revisit this.
 }
 
 static_assert(abs_equal(pow(2.f, 1.5f), 2.828427f, 1e-6f));
