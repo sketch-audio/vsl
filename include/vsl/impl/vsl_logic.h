@@ -49,6 +49,49 @@ force_inline constexpr auto all(C cond) -> bool
 static_assert(all(true));
 static_assert(!all(false));
 
+template<typename X>
+force_inline constexpr auto all_same(X a) -> bool
+{
+    if constexpr (is_vector_v<X>) {
+        return all(a == a[0]);
+    } else {
+        return true;
+    }
+}
+
+template<typename X>
+force_inline constexpr auto all_unique(X a) -> bool
+{
+    if constexpr (is_vector_v<X>) {
+        constexpr auto N = num_members_v<X>;
+        for (size_t i = 0; i < N; i++) {
+            for (size_t j = i + 1; j < N; j++) {
+                if (a[i] == a[j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    } else {
+        return true;
+    }
+}
+
+template<typename X>
+force_inline constexpr auto all_finite(X a) -> bool
+{
+    if constexpr (is_vector_v<X>) {
+        return all(a == a) && all(a - a == X{0}); // NaN and Inf check.
+    } else {
+        return a == a && (a - a == 0); // NaN and Inf check.
+    }
+}
+
+// static_assert(all_finite(0.f));
+// static_assert(all_finite(1.f));
+// static_assert(!all_finite(std::numeric_limits<float>::infinity()));
+// static_assert(!all_finite(std::numeric_limits<float>::quiet_NaN()));
+
 // MARK: - Equality
 
 /// Are two numbers
