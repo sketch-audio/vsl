@@ -148,24 +148,37 @@ static_assert([]() {
 
 // MARK: - Trig Functions
 
+namespace impl {
+// Fast wrap, symmetric around zero.
+template<typename X, typename S>
+force_inline constexpr auto wrap_sym(X x, S k) -> X
+{
+    // See: https://github.com/Chowdhury-DSP/math_approx/blob/main/include/math_approx/src/trig_approx.hpp
+    const auto two_k = 2 * k;
+    x += k;
+    const auto m = x - two_k * trunc(x * (1 / two_k));
+    return select(x >= 0, m, m + two_k) - k;
+}
+} // namespace impl
+
 ///
 template<typename X>
 force_inline constexpr auto cos(X x) -> X
 {
     using S = scalar_t<X>;
     constexpr auto pi = std::numbers::pi_v<S>;
-    x = wrap(x, -pi, pi);
+    x = impl::wrap_sym(x, pi);
 
-    const auto c0 = S(9.99999991e-01);
-    const auto c2 = S(-4.99999934e-01);
-    const auto c4 = S(4.16665646e-02);
-    const auto c6 = S(-1.38882256e-03);
-    const auto c8 = S(2.47799311e-05);
-    const auto c10 = S(-2.71853320e-07);
-    const auto c12 = S(1.76564052e-09);
+    // Computed with CVXPY. See work/cos_approx.py.
+    const auto c0 = S(9.99999990e-01);
+    const auto c2 = S(-4.99999924e-01);
+    const auto c4 = S(4.16665522e-02);
+    const auto c6 = S(-1.38881637e-03);
+    const auto c8 = S(2.47784807e-05);
+    const auto c10 = S(-2.71696877e-07);
+    const auto c12 = S(1.75939307e-09);
 
     const auto x2 = x * x;
-
     return c0 + x2 * (c2 + x2 * (c4 + x2 * (c6 + x2 * (c8 + x2 * (c10 + x2 * c12)))));
 }
 
@@ -177,17 +190,17 @@ force_inline constexpr auto sin(X x) -> X
 {
     using S = scalar_t<X>;
     constexpr auto pi = std::numbers::pi_v<S>;
-    x = wrap(x, -pi, pi);
+    x = impl::wrap_sym(x, pi);
 
-    const auto c1 = S(9.99999737e-01);
-    const auto c3 = S(-1.66665387e-01);
-    const auto c5 = S(8.33221031e-03);
-    const auto c7 = S(-1.98027220e-04);
-    const auto c9 = S(2.69284266e-06);
-    const auto c11 = S(-2.00882849e-08);
+    // Coefficients computed with CVXPY. See work/sin_approx.py.
+    const auto c1 = S(9.99999699e-01);
+    const auto c3 = S(-1.66665244e-01);
+    const auto c5 = S(8.33211548e-03);
+    const auto c7 = S(-1.98004157e-04);
+    const auto c9 = S(2.69047940e-06);
+    const auto c11 = S(-2.00016290e-08);
 
     const auto x2 = x * x;
-
     return x * (c1 + x2 * (c3 + x2 * (c5 + x2 * (c7 + x2 * (c9 + x2 * c11)))));
 }
 
@@ -198,24 +211,10 @@ template<typename X>
 force_inline constexpr auto tan(X x) -> X
 {
     using S = scalar_t<X>;
-    constexpr auto pi = std::numbers::pi_v<S>;
-    x = wrap(x, -pi / 2, pi / 2);
+    constexpr auto half_pi = std::numbers::pi_v<S> / 2;
+    x = impl::wrap_sym(x, half_pi);
 
-    // constexpr auto a1 = S(1);
-    // constexpr auto a3 = S(-5 / 39.0);
-    // constexpr auto a5 = S(2 / 715.0);
-    // constexpr auto a7 = S(-1 / 135135.0);
-    // constexpr auto b0 = S(1);
-    // constexpr auto b2 = S(-6 / 13.0);
-    // constexpr auto b4 = S(10 / 429.0);
-    // constexpr auto b6 = S(-4 / 19305.0);
-
-// a:[ 2.90195033e-08  0.00000000e+00 -2.87293887e-05  0.00000000e+00
-//   3.92156623e-03  0.00000000e+00 -1.37254883e-01  0.00000000e+00
-//   1.00000000e+00  0.00000000e+00]
-// b:[ 1.30587986e-06  0.00000000e+00 -4.02211733e-04 -0.00000000e+00
-//   2.74509718e-02  0.00000000e+00 -4.70588217e-01 -0.00000000e+00
-//   1.00000000e+00]
+    // Padé approximant. See work/tan_approx.py
     constexpr auto a1 = S(1);
     constexpr auto a3 = S(-1.37254883e-01);
     constexpr auto a5 = S(3.92156623e-03);
@@ -230,9 +229,7 @@ force_inline constexpr auto tan(X x) -> X
 
     const auto x2 = x * x;
 
-    // const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
     const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * (a7 + x2 * a9))));
-    // const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
     const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * (b6 + x2 * b8)));
 
     return numer / denom;
@@ -247,6 +244,8 @@ template<typename X>
 force_inline constexpr auto asin(X x) -> X
 {
     using S = scalar_t<X>;
+
+    // Padé approximant. See work/asin_approx.py
     constexpr auto a1 = S(1);
     constexpr auto a3 = S(-1.27636876);
     constexpr auto a5 = S(0.3993034);
@@ -281,6 +280,8 @@ template<typename X>
 force_inline constexpr auto atan(X x) -> X
 {
     using S = scalar_t<X>;
+
+    // Padé approximant. See work/atan_approx.py
     constexpr auto a1 = S(1);
     constexpr auto a3 = S(1.28205128);
     constexpr auto a5 = S(0.3958042);
@@ -300,74 +301,6 @@ force_inline constexpr auto atan(X x) -> X
 
 static_assert(abs_equal(atan(0.f), 0.f));
 
-// MARK: - Hyperbolic Trig Functions
-
-///
-template<typename X>
-force_inline constexpr auto cosh(X x) -> X
-{
-    using S = scalar_t<X>;
-    constexpr auto a0 = S(1);
-    constexpr auto a2 = S(3665 / 7788.0);
-    constexpr auto a4 = S(711 / 25960.0);
-    constexpr auto a6 = S(301 / 808396.0);
-    constexpr auto b0 = S(1);
-    constexpr auto b2 = S(-229 / 7788.0);
-    constexpr auto b4 = S(1 / 2360.0);
-    constexpr auto b6 = S(-1 / 309067.0);
-
-    const auto x2 = x * x;
-
-    const auto numer = a0 + x2 * (a2 + x2 * (a4 + x2 * a6));
-    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
-
-    return numer / denom;
-}
-
-///
-template<typename X>
-force_inline constexpr auto sinh(X x) -> X
-{
-    using S = scalar_t<X>;
-    constexpr auto a1 = S(1);
-    constexpr auto a3 = S(29593 / 207636.0);
-    constexpr auto a5 = S(1911 / 416747.0);
-    constexpr auto a7 = S(13 / 312254.0);
-    constexpr auto b0 = S(1);
-    constexpr auto b2 = S(-1671 / 69212.0);
-    constexpr auto b4 = S(97 / 351384.0);
-    constexpr auto b6 = S(-1 / 626945.0);
-
-    const auto x2 = x * x;
-
-    const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
-    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
-
-    return numer / denom;
-}
-
-///
-template<typename X>
-force_inline constexpr auto tanh(X x) -> X
-{
-    using S = scalar_t<X>;
-    constexpr auto a1 = S(1);
-    constexpr auto a3 = S(5 / 39.0);
-    constexpr auto a5 = S(2 / 715.0);
-    constexpr auto a7 = S(1 / 135135.0);
-    constexpr auto b0 = S(1);
-    constexpr auto b2 = S(6 / 13.0);
-    constexpr auto b4 = S(10 / 429.0);
-    constexpr auto b6 = S(4 / 19305.0);
-
-    const auto x2 = x * x;
-
-    const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
-    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
-
-    return numer / denom;
-}
-
 // MARK: - exp2, log2
 
 ///
@@ -378,7 +311,8 @@ force_inline constexpr auto exp2(X x) -> X
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
-    const auto int_part = float_to_signed(round(x));
+    // We lose some absolute accuracy here for large x (as opposed to round), but this helps us stay competitive with std::exp2 on performance.
+    const auto int_part = float_to_signed(floor(x));
     const auto dec_part = x - signed_to_float(int_part);
 
     // In C++20 we have two's complement.
@@ -393,7 +327,7 @@ force_inline constexpr auto exp2(X x) -> X
     // const auto c3 = S(0.05550713);
     // const auto c4 = S(0.00967553);
     // const auto c5 = S(0.00132767);
-    //const auto dec_pow = c0 + dec_part * (c1 + dec_part * (c2 + dec_part * (c3 + dec_part * (c4 + dec_part * c5))));
+    // const auto dec_pow = c0 + dec_part * (c1 + dec_part * (c2 + dec_part * (c3 + dec_part * (c4 + dec_part * c5))));
 
     //[1.53454060e-04 1.33997989e-03 9.61848889e-03 5.55032909e-02
     // 2.40226469e-01 6.93147206e-01 1.00000000e+00]
@@ -569,6 +503,82 @@ force_inline constexpr auto pow(X x, X y) -> X
 static_assert(abs_equal(pow(2.f, 1.5f), 2.828427f, 1e-6f));
 static_assert(rel_equal(pow(10.f, -48 / 20.f), 0.00398f));
 static_assert(rel_equal(pow(10.f, 36 / 20.f), 63.09573f));
+
+// MARK: - Hyperbolic Trig Functions
+
+///
+template<typename X>
+force_inline constexpr auto cosh(X x) -> X
+{
+    const auto b = exp(x);
+    const auto br = 1 / (2 * b);
+    const auto bh = b / 2;
+    return bh + br;
+    // using S = scalar_t<X>;
+    // constexpr auto a0 = S(1);
+    // constexpr auto a2 = S(3665 / 7788.0);
+    // constexpr auto a4 = S(711 / 25960.0);
+    // constexpr auto a6 = S(301 / 808396.0);
+    // constexpr auto b0 = S(1);
+    // constexpr auto b2 = S(-229 / 7788.0);
+    // constexpr auto b4 = S(1 / 2360.0);
+    // constexpr auto b6 = S(-1 / 309067.0);
+
+    // const auto x2 = x * x;
+
+    // const auto numer = a0 + x2 * (a2 + x2 * (a4 + x2 * a6));
+    // const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
+
+    // return numer / denom;
+}
+
+///
+template<typename X>
+force_inline constexpr auto sinh(X x) -> X
+{
+    const auto b = exp(x);
+    const auto br = 1 / (2 * b);
+    const auto bh = b / 2;
+    return bh - br;
+    // using S = scalar_t<X>;
+    // constexpr auto a1 = S(1);
+    // constexpr auto a3 = S(29593 / 207636.0);
+    // constexpr auto a5 = S(1911 / 416747.0);
+    // constexpr auto a7 = S(13 / 312254.0);
+    // constexpr auto b0 = S(1);
+    // constexpr auto b2 = S(-1671 / 69212.0);
+    // constexpr auto b4 = S(97 / 351384.0);
+    // constexpr auto b6 = S(-1 / 626945.0);
+
+    // const auto x2 = x * x;
+
+    // const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
+    // const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
+
+    // return numer / denom;
+}
+
+///
+template<typename X>
+force_inline constexpr auto tanh(X x) -> X
+{
+    using S = scalar_t<X>;
+    constexpr auto a1 = S(1);
+    constexpr auto a3 = S(5 / 39.0);
+    constexpr auto a5 = S(2 / 715.0);
+    constexpr auto a7 = S(1 / 135135.0);
+    constexpr auto b0 = S(1);
+    constexpr auto b2 = S(6 / 13.0);
+    constexpr auto b4 = S(10 / 429.0);
+    constexpr auto b6 = S(4 / 19305.0);
+
+    const auto x2 = x * x;
+
+    const auto numer = x * (a1 + x2 * (a3 + x2 * (a5 + x2 * a7)));
+    const auto denom = b0 + x2 * (b2 + x2 * (b4 + x2 * b6));
+
+    return numer / denom;
+}
 
 // MARK: - Other
 
