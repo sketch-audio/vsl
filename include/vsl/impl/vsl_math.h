@@ -86,7 +86,7 @@ static_assert(ceil(5.f) == 5.f);
 template<typename X>
 force_inline constexpr auto round(X x) -> X 
 {
-    return vsl::select(x >= 0, floor(x + 0.5f), ceil(x - 0.5f));
+    return select(x >= 0, floor(x + 0.5f), ceil(x - 0.5f));
 }
 
 static_assert(round(1.5f) == 2.f);
@@ -493,7 +493,7 @@ template<typename X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
     assert(all(x >= 0) && "vsl::pow requires x >= 0!");
-    return vsl::select(x == 0, X{}, exp2(log2(x) * y)); // Revisit this.
+    return select(x == 0, X{}, exp2(log2(x) * y)); // Revisit this.
 }
 
 static_assert(abs_equal(pow(2.f, 1.5f), 2.828427f, 1e-6f));
