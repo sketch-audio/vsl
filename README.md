@@ -1,5 +1,17 @@
 # VSL
 The vector support library.
 
-## TODO:
-- Add exp, log approximation scripts to work.
+## Math
+- `abs`
+- `trunc`, `floor`, `ceil`, `round`
+- `fmod` (also `wrap`)
+- `cos`, `sin`, `tan`
+- `acos`, `asin`, `atan` (Padé approximants)
+- `exp`, `exp2`
+- `log`, `log2`, `log10` (also `logB`)
+- `pow` (for bases >= 0)
+- `cosh`, `sinh`
+- `tanh` (Padé approximant)
+- `min`, `max`
+- `clamp`
+- `sign`
