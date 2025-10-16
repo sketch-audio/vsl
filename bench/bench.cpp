@@ -7,6 +7,8 @@ int main() {
     // bench_cos();
     // bench_sin();
     // bench_tan();
+    // bench_cos_2pi();
+    // bench_sin_2pi();
     // bench_exp2();
     // bench_log2();
     // bench_exp();

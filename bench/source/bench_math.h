@@ -92,6 +92,64 @@ inline auto bench_tan() -> void
     audio_bench::compare_benchmarks(stats_std, stats_vsl);
 }
 
+inline auto bench_cos_2pi() -> void
+{
+    auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+
+    auto t_std = audio_bench::Lambda_timer("std::cos(2pi*x) process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::cos(2 * std::numbers::pi_v<float> * x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Lambda_timer("vsl::cos_2pi process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = vsl::cos_2pi(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using enum audio_bench::Bench_units;
+
+    const auto stats_std = t_std.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_std);
+
+    const auto stats_vsl = t_vsl.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_vsl);
+
+    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+}
+
+inline auto bench_sin_2pi() -> void
+{
+    auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+
+    auto t_std = audio_bench::Lambda_timer("std::sin(2pi*x) process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::sin(2 * std::numbers::pi_v<float> * x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Lambda_timer("vsl::sin_2pi process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = vsl::sin_2pi(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using enum audio_bench::Bench_units;
+
+    const auto stats_std = t_std.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_std);
+
+    const auto stats_vsl = t_vsl.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_vsl);
+
+    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+}
+
 // MARK: - exp2/log2
 
 inline auto bench_exp2() -> void

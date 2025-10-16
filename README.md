@@ -6,6 +6,7 @@ The vector support library.
 - `trunc`, `floor`, `ceil`, `round`
 - `fmod` (also `wrap`)
 - `cos`, `sin`, `tan`
+- `cos_2pi`, `sin_2pi`
 - `acos`, `asin`, `atan` (Padé approximants)
 - `exp`, `exp2`
 - `log`, `log2`, `log10` (also `logB`)

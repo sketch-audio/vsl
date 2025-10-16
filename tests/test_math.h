@@ -102,6 +102,28 @@ inline auto test_math() -> void
         }
     });
 
+    audio_bench::add_test("Test vsl::cos_2pi.", [&]() {
+        auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+        for (auto x : xs) {
+            const auto v = vsl::cos_2pi(vsl::float32x4{x});
+            const auto s = std::cos(2 * std::numbers::pi_v<float> * x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-4f}, std::format("Fail cos_2pi({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Rel_err{5e-3f}, std::format("Fail cos_2pi({})", x), false);
+        }
+    });
+
+    audio_bench::add_test("Test vsl::sin_2pi.", [&]() {
+        auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+        for (auto x : xs) {
+            const auto v = vsl::sin_2pi(vsl::float32x4{x});
+            const auto s = std::sin(2 * std::numbers::pi_v<float> * x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-4f}, std::format("Fail sin_2pi({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1.f}, std::format("Fail sin_2pi({})", x), false);
+        }
+    });
+
     // MARK: - inverse trig
 
     audio_bench::add_test("Test vsl::acos.", [&]() {

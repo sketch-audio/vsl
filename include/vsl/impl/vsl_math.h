@@ -207,6 +207,49 @@ force_inline constexpr auto sin(X x) -> X
 
 static_assert(abs_equal(sin(0.f), 0.f));
 
+template<typename X>
+force_inline constexpr auto cos_2pi(X x) -> X
+{
+    using S = scalar_t<X>;
+
+    assert(all(x >= 0) && all(x <= 1) && "cos_2pi requires 0 <= x <= 1");
+    x = select(x < 0.5f, x, x - 1);
+
+    // [ 4.62331203e+01 -1.02599716e-12 -8.26473806e+01  4.56383727e-13
+    //   6.46984880e+01 -6.09849071e-14 -1.97310048e+01  2.04709892e-15
+    //   9.99931447e-01]
+    const auto c0 = S(9.99931447e-01);
+    const auto c2 = S(-1.97310048e+01);
+    const auto c4 = S(6.46984880e+01);
+    const auto c6 = S(-8.26473806e+01);
+    const auto c8 = S(4.62331203e+01);
+
+    const auto x2 = x * x;
+    return c0 + x2 * (c2 + x2 * (c4 + x2 * (c6 + x2 * c8)));
+}
+
+template<typename X>
+force_inline constexpr auto sin_2pi(X x) -> X
+{
+    using S = scalar_t<X>;
+
+    assert(all(x >= 0) && all(x <= 1) && "sin_2pi requires 0 <= x <= 1");
+    x = select(x < 0.5f, x, x - 1);
+
+    // [ 3.18403159e+01  6.09903478e-09 -7.39799267e+01 -3.32049873e-09
+    //   8.12847877e+01  5.54247386e-10 -4.13272028e+01 -2.62944449e-11
+    //   6.28306165e+00  1.26896905e-16]
+    const auto c1 = S(6.28306165e+00);
+    const auto c3 = S(-4.13272028e+01);
+    const auto c5 = S(8.12847877e+01);
+    const auto c7 = S(-7.39799267e+01);
+    const auto c9 = S(3.18403159e+01);
+
+    const auto x2 = x * x;
+
+    return x * (c1 + x2 * (c3 + x2 * (c5 + x2 * (c7 + x2 * c9))));
+}
+
 ///
 template<typename X>
 force_inline constexpr auto tan(X x) -> X
