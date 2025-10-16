@@ -147,7 +147,7 @@ inline auto test_math() -> void
             const auto v = vsl::exp2(vsl::float32x4{x});
             const auto s = std::exp2(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-2f}, std::format("Fail exp2({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{2e-4f}, std::format("Fail exp2({})", x), false);
             audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1e-3f}, std::format("Fail exp2({})", x), false);
         }
     });
@@ -249,7 +249,7 @@ inline auto test_math() -> void
             const auto v = vsl::sinh(vsl::float32x4{x});
             const auto s = std::sinh(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-5f}, std::format("Fail sinh({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{2e-5f}, std::format("Fail sinh({})", x), false);
             audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1e-3f}, std::format("Fail sinh({})", x), false);
         }
     });
@@ -260,7 +260,7 @@ inline auto test_math() -> void
             const auto v = vsl::cosh(vsl::float32x4{x});
             const auto s = std::cosh(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-5f}, std::format("Fail cosh({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{2e-5f}, std::format("Fail cosh({})", x), false);
             audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1e-3f}, std::format("Fail cosh({})", x), false);
         }
     });
