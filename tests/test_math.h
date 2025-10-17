@@ -263,6 +263,17 @@ inline auto test_math() -> void
         }
     });
 
+    audio_bench::add_test("Test vsl::sqrt.", [&]() {
+        auto xs = audio_bench::make_range(0.f, 100.f, 100000);
+        for (auto x : xs) {
+            const auto v = vsl::sqrt(vsl::float32x4{x});
+            const auto s = std::sqrt(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-6f}, std::format("Fail sqrt({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1e-3f}, std::format("Fail sqrt({})", x), false);
+        }
+    });
+
     // MARK: - hyperbolic trig
 
     audio_bench::add_test("Test vsl::sinh.", [&]() {

@@ -13,6 +13,7 @@ int main() {
     // bench_log2();
     // bench_exp();
     bench_pow();
+    // bench_sqrt();
     // bench_cosh();
     // bench_sinh();
     // bench_tanh();

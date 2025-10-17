@@ -30,16 +30,14 @@ static_assert(abs(2.0) == 2.0);
 template<typename X>
 force_inline constexpr auto trunc(X x) -> X
 {
-    using S = scalar_t<X>;
-    constexpr auto sig_bits = ieee_sig_bits_v<S>;
-    constexpr auto one = decltype(sig_bits){1};
-    constexpr auto thresh = (one << sig_bits); // Values >= thresh are integers. For a float, this is 8388608.f
-
-    // These casts are OK because sig_bits < the number of bits in our integer counterpart.
     if constexpr (is_vector_v<X>) {
-        return select(abs(x) >= thresh, x, signed_to_float(float_to_signed(x)));
+        return X::trunc(x);
     }
     else {
+        using S = scalar_t<X>;
+        constexpr auto sig_bits = ieee_sig_bits_v<S>;
+        constexpr auto one = decltype(sig_bits){1};
+        constexpr auto thresh = (one << sig_bits); // Values >= thresh are integers. For a float, this is 8388608.f
         using I = signed_t<X>;
         return (abs(x) >= thresh) ? x : static_cast<X>(static_cast<I>(x));
     }
@@ -60,8 +58,13 @@ static_assert(trunc(1e20) == 1e20);
 template<typename X>
 force_inline constexpr auto floor(X x) -> X
 {
-    const auto t = trunc(x);
-    return select(x >= 0, t, select(x == t, t, t - 1));
+    if constexpr (is_vector_v<X>) {
+        return X::floor(x);
+    }
+    else {
+        const auto t = trunc(x);
+        return select(x >= 0, t, select(x == t, t, t - 1));
+    }
 }
 
 static_assert(floor(2.35f) == 2.f);
@@ -73,8 +76,13 @@ static_assert(floor(-1.f) == -1.f);
 template<typename X>
 force_inline constexpr auto ceil(X x) -> X 
 {
-    const auto f = floor(x);
-    return select(x == f, f, f + 1);
+    if constexpr (is_vector_v<X>) {
+        return X::ceil(x);
+    }
+    else {
+        const auto f = floor(x);
+        return select(x == f, f, f + 1);
+    }
 }
 
 static_assert(ceil(0.f) == 0.f);
@@ -86,7 +94,12 @@ static_assert(ceil(5.f) == 5.f);
 template<typename X>
 force_inline constexpr auto round(X x) -> X 
 {
-    return select(x >= 0, floor(x + 0.5f), ceil(x - 0.5f));
+    if constexpr (is_vector_v<X>) {
+        return X::round(x);
+    }
+    else {
+        return select(x >= 0, floor(x + 0.5f), ceil(x - 0.5f));
+    }
 }
 
 static_assert(round(1.5f) == 2.f);
@@ -500,6 +513,18 @@ static_assert(abs_equal(pow(2.f, 1.5f), 2.828427f, 1e-6f));
 static_assert(rel_equal(pow(10.f, -48 / 20.f), 0.00398f));
 static_assert(rel_equal(pow(10.f, 36 / 20.f), 63.09573f));
 
+///
+template<typename X>
+force_inline constexpr auto sqrt(X x) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return X::sqrt(x);
+    }
+    else {
+        return std::sqrt(x);
+    }
+}
+
 // MARK: - Hyperbolic Trig Functions
 
 ///
@@ -550,7 +575,12 @@ force_inline constexpr auto tanh(X x) -> X
 template<typename X, typename C>
 force_inline constexpr auto min(X a, C b) -> X
 {
-    return select(a < b, a, X(b));
+    if constexpr (is_vector_v<X>) {
+        return X::min(a, X{b});
+    }
+    else {
+        return select(a < b, a, X{b});
+    }
 }
 
 static_assert(min(-2, 5) == -2);
@@ -559,7 +589,12 @@ static_assert(min(-2, 5) == -2);
 template<typename X, typename C>
 force_inline constexpr auto max(X a, C b) -> X
 {
-    return select(a > b, a, X(b));
+    if constexpr (is_vector_v<X>) {
+        return X::max(a, X{b});
+    }
+    else {
+        return select(a > b, a, X{b});
+    }
 }
 
 static_assert(max(-2, 5) == 5);

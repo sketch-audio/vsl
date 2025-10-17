@@ -503,7 +503,7 @@ private:
 #elif VSL_SSE4
         // See: https://stackoverflow.com/questions/41144668/
         // Only works for inputs in the range: [-2^51, 2^51]
-        x = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC); // truncate!
+        x = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
         x = _mm_add_pd(x, _mm_set1_pd(0x0018000000000000));
         return _mm_sub_epi64(_mm_castpd_si128(x), _mm_castpd_si128(_mm_set1_pd(0x0018000000000000)));
 #endif
@@ -517,8 +517,72 @@ private:
 #elif VSL_SSE4
         // See: https://stackoverflow.com/questions/41144668/
         // Only works for inputs in the range: [0, 2^52]
+        x = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
         x = _mm_add_pd(x, _mm_set1_pd(0x0010000000000000));
         return _mm_sub_epi64(_mm_castpd_si128(x), _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)));
+#endif
+    }
+
+    static force_inline auto vector_call trunc(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vcvtq_f64_s64(vcvtq_s64_f64(x));
+#elif VSL_SSE4
+        return _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+#endif
+    }
+
+    static force_inline auto vector_call floor(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndmq_f64(x);
+#elif VSL_SSE4
+        return _mm_floor_pd(x);
+#endif
+    }
+
+    static force_inline auto vector_call ceil(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndpq_f64(x);
+#elif VSL_SSE4
+        return _mm_ceil_pd(x);
+#endif
+    }
+
+    static force_inline auto vector_call round(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndnq_f64(x);
+#elif VSL_SSE4
+        return _mm_round_pd(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+#endif
+    }
+
+    static force_inline auto vector_call sqrt(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vsqrtq_f64(x);
+#elif VSL_SSE4
+        return _mm_sqrt_pd(x);
+#endif
+    }
+
+    static force_inline auto vector_call min(Vector a, Vector b) -> Vector
+    {
+#if VSL_NEON
+        return vminq_f64(a, b);
+#elif VSL_SSE4
+        return _mm_min_pd(a, b);
+#endif
+    }
+
+    static force_inline auto vector_call max(Vector a, Vector b) -> Vector
+    {
+#if VSL_NEON
+        return vmaxq_f64(a, b);
+#elif VSL_SSE4
+        return _mm_max_pd(a, b);
 #endif
     }
 
@@ -555,6 +619,15 @@ public:
 
     static force_inline auto vector_call float_to_signed(float64x2 x) noexcept -> Mask { return float_to_signed(x.data); }
     static force_inline auto vector_call float_to_unsigned(float64x2 x) noexcept -> Mask { return float_to_unsigned(x.data); }
+
+    static force_inline auto vector_call trunc(float64x2 x) noexcept -> float64x2 { return trunc(x.data); }
+    static force_inline auto vector_call floor(float64x2 x) noexcept -> float64x2 { return floor(x.data); }
+    static force_inline auto vector_call ceil(float64x2 x) noexcept -> float64x2 { return ceil(x.data); }
+    static force_inline auto vector_call round(float64x2 x) noexcept -> float64x2 { return round(x.data); }
+
+    static force_inline auto vector_call sqrt(float64x2 x) noexcept -> float64x2 { return sqrt(x.data); }
+    static force_inline auto vector_call min(float64x2 a, float64x2 b) noexcept -> float64x2 { return min(a.data, b.data); }
+    static force_inline auto vector_call max(float64x2 a, float64x2 b) noexcept -> float64x2 { return max(a.data, b.data); }
 
 };
 
@@ -1040,6 +1113,69 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call trunc(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vcvtq_f32_s32(vcvtq_s32_f32(x));
+#elif VSL_SSE4
+        return _mm_round_ps(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+#endif
+    }
+
+    static force_inline auto vector_call floor(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndmq_f32(x);
+#elif VSL_SSE4
+        return _mm_floor_ps(x);
+#endif
+    }
+
+    static force_inline auto vector_call ceil(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndpq_f32(x);
+#elif VSL_SSE4
+        return _mm_ceil_ps(x);
+#endif
+    }
+
+    static force_inline auto vector_call round(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndnq_f32(x);
+#elif VSL_SSE4
+        return _mm_round_ps(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+#endif
+    }
+
+    static force_inline auto vector_call sqrt(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vsqrtq_f32(x);
+#elif VSL_SSE4
+        return _mm_sqrt_ps(x);
+#endif
+    }
+
+    static force_inline auto vector_call min(Vector a, Vector b) -> Vector
+    {
+#if VSL_NEON
+        return vminq_f32(a, b);
+#elif VSL_SSE4
+        return _mm_min_ps(a, b);
+#endif
+    }
+
+    static force_inline auto vector_call max(Vector a, Vector b) -> Vector
+    {
+#if VSL_NEON
+        return vmaxq_f32(a, b);
+#elif VSL_SSE4
+        return _mm_max_ps(a, b);
+#endif
+    }
+
 public:
     force_inline float32x4() noexcept = default;
     force_inline float32x4(Scalar x) noexcept : data{make_vector(x)} {}
@@ -1073,6 +1209,15 @@ public:
 
     static force_inline auto vector_call float_to_signed(float32x4 x) noexcept -> Mask { return float_to_signed(x.data); }
     static force_inline auto vector_call float_to_unsigned(float32x4 x) noexcept -> Mask { return float_to_unsigned(x.data); }
+
+    static force_inline auto vector_call trunc(float32x4 x) noexcept -> float32x4 { return trunc(x.data); }
+    static force_inline auto vector_call floor(float32x4 x) noexcept -> float32x4 { return floor(x.data); }
+    static force_inline auto vector_call ceil(float32x4 x) noexcept -> float32x4 { return ceil(x.data); }
+    static force_inline auto vector_call round(float32x4 x) noexcept -> float32x4 { return round(x.data); }
+
+    static force_inline auto vector_call sqrt(float32x4 x) noexcept -> float32x4 { return sqrt(x.data); }
+    static force_inline auto vector_call min(float32x4 a, float32x4 b) noexcept -> float32x4 { return min(a.data, b.data); }
+    static force_inline auto vector_call max(float32x4 a, float32x4 b) noexcept -> float32x4 { return max(a.data, b.data); }
 
 };
 

@@ -281,6 +281,36 @@ inline auto bench_pow() -> void
     audio_bench::compare_benchmarks(stats_std, stats_vsl);
 }
 
+inline auto bench_sqrt() -> void
+{
+    auto xs = audio_bench::make_range(0.0001f, 10000.f, 100000);
+    auto xs_vec = audio_bench::make_range(vsl::float32x4{0.0001f}, vsl::float32x4{10000.f}, 25000);
+
+    auto t_std = audio_bench::Lambda_timer("std::sqrt process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::sqrt(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Lambda_timer("vsl::sqrt process 100000 floats", [&]() {
+        for (auto x : xs_vec) {
+            auto y = vsl::sqrt(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using enum audio_bench::Bench_units;
+
+    const auto stats_std = t_std.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_std);
+
+    const auto stats_vsl = t_vsl.run({.units = microseconds});
+    audio_bench::print_bench_stats(stats_vsl);
+
+    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+}
+
 // MARK: - sinh/cosh/tanh
 
 inline auto bench_sinh() -> void
