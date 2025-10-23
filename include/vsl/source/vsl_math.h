@@ -220,12 +220,13 @@ force_inline constexpr auto sin(X x) -> X
 
 static_assert(abs_equal(sin(0.f), 0.f));
 
+// Domain: [0, 1] !!!
 template<typename X>
 force_inline constexpr auto cos_2pi(X x) -> X
 {
     using S = scalar_t<X>;
 
-    assert(all(x >= 0) && all(x <= 1) && "cos_2pi requires 0 <= x <= 1");
+    //assert(all(x >= 0) && all(x <= 1) && "cos_2pi requires 0 <= x <= 1");
     x = select(x < 0.5f, x, x - 1);
 
     // [ 4.62331203e+01 -1.02599716e-12 -8.26473806e+01  4.56383727e-13
@@ -241,12 +242,13 @@ force_inline constexpr auto cos_2pi(X x) -> X
     return c0 + x2 * (c2 + x2 * (c4 + x2 * (c6 + x2 * c8)));
 }
 
+// Domain: [0, 1] !!!
 template<typename X>
 force_inline constexpr auto sin_2pi(X x) -> X
 {
     using S = scalar_t<X>;
 
-    assert(all(x >= 0) && all(x <= 1) && "sin_2pi requires 0 <= x <= 1");
+    //assert(all(x >= 0) && all(x <= 1) && "sin_2pi requires 0 <= x <= 1");
     x = select(x < 0.5f, x, x - 1);
 
     // [ 3.18403159e+01  6.09903478e-09 -7.39799267e+01 -3.32049873e-09
@@ -501,11 +503,11 @@ force_inline constexpr auto logB(X b, X x) -> X
     return log2(x) / log2(b);
 }
 
-///
+// Domain: x >= 0 !!!
 template<typename X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
-    assert(all(x >= 0) && "vsl::pow requires x >= 0!");
+    //assert(all(x >= 0) && "vsl::pow requires x >= 0!");
     return select(x == 0, X{}, exp2(log2(x) * y)); // Revisit this.
 }
 
