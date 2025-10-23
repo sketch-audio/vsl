@@ -7,7 +7,7 @@
 
 inline auto bench_cos() -> void
 {
-    auto xs = audio_bench::make_range(-10.f, 10.f, 100000);
+    auto xs = audio_bench::make_range<float>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::cos process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -23,7 +23,7 @@ inline auto bench_cos() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -31,12 +31,12 @@ inline auto bench_cos() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_sin() -> void
 {
-    auto xs = audio_bench::make_range(-10.f, 10.f, 100000);
+    auto xs = audio_bench::make_range<float>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::sin process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -52,7 +52,7 @@ inline auto bench_sin() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -60,12 +60,12 @@ inline auto bench_sin() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_tan() -> void
 {
-    auto xs = audio_bench::make_range(-10.f, 10.f, 100000);
+    auto xs = audio_bench::make_range<float>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::tan process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -81,7 +81,7 @@ inline auto bench_tan() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -89,16 +89,16 @@ inline auto bench_tan() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_cos_2pi() -> void
 {
-    auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+    auto xs = audio_bench::make_range<float>({0.f, 1.f, 100000});
 
-    auto t_std = audio_bench::Lambda_timer("std::cos(2pi*x) process 100000 floats", [&]() {
+    auto t_std = audio_bench::Lambda_timer("vsl::cos(2pi*x) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = std::cos(2 * std::numbers::pi_v<float> * x);
+            auto y = vsl::cos(2 * std::numbers::pi_v<float> * x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -110,7 +110,7 @@ inline auto bench_cos_2pi() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -118,16 +118,16 @@ inline auto bench_cos_2pi() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_sin_2pi() -> void
 {
-    auto xs = audio_bench::make_range(0.f, 1.f, 100000);
+    auto xs = audio_bench::make_range<float>({0.f, 1.f, 100000});
 
-    auto t_std = audio_bench::Lambda_timer("std::sin(2pi*x) process 100000 floats", [&]() {
+    auto t_std = audio_bench::Lambda_timer("vsl::sin(2pi*x) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = std::sin(2 * std::numbers::pi_v<float> * x);
+            auto y = vsl::sin(2 * std::numbers::pi_v<float> * x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -139,7 +139,7 @@ inline auto bench_sin_2pi() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -147,14 +147,14 @@ inline auto bench_sin_2pi() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 // MARK: - exp2/log2
 
 inline auto bench_exp2() -> void
 {
-    auto xs = audio_bench::make_range(-10.f, 10.f, 100000);
+    auto xs = audio_bench::make_range<float>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::exp2 process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -170,7 +170,7 @@ inline auto bench_exp2() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -178,12 +178,12 @@ inline auto bench_exp2() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_log2() -> void
 {
-    auto xs = audio_bench::make_range(0.0001f, 10000.f, 100000);
+    auto xs = audio_bench::make_range<float>({0.0001f, 10000.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::log2 process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -199,7 +199,7 @@ inline auto bench_log2() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -207,14 +207,14 @@ inline auto bench_log2() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 // MARK: - exp
 
 inline auto bench_exp() -> void
 {
-    auto xs = audio_bench::make_range(-10.f, 10.f, 100000);
+    auto xs = audio_bench::make_range<float>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::exp process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -230,7 +230,7 @@ inline auto bench_exp() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -238,15 +238,15 @@ inline auto bench_exp() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 // MARK: - pow
 
 inline auto bench_pow() -> void
 {
-    auto xs = audio_bench::make_range(0.0001f, 100.f, 1000);
-    auto ys = audio_bench::make_range(-10.f, 10.f, 100);
+    auto xs = audio_bench::make_range<float>({0.0001f, 100.f, 1000});
+    auto ys = audio_bench::make_range<float>({-10.f, 10.f, 100});
 
     std::vector<std::pair<float, float>> pairs;
     pairs.reserve(xs.size() * ys.size());
@@ -270,7 +270,7 @@ inline auto bench_pow() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -278,13 +278,13 @@ inline auto bench_pow() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_sqrt() -> void
 {
-    auto xs = audio_bench::make_range(0.0001f, 10000.f, 100000);
-    auto xs_vec = audio_bench::make_range(vsl::float32x4{0.0001f}, vsl::float32x4{10000.f}, 25000);
+    auto xs = audio_bench::make_range<float>({0.0001f, 10000.f, 100000});
+    auto xs_vec = audio_bench::make_range<vsl::float32x4>({0.0001f, 10000.f, 25000});
 
     auto t_std = audio_bench::Lambda_timer("std::sqrt process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -300,7 +300,7 @@ inline auto bench_sqrt() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -308,14 +308,14 @@ inline auto bench_sqrt() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 // MARK: - sinh/cosh/tanh
 
 inline auto bench_sinh() -> void
 {
-    auto xs = audio_bench::make_range(-5.f, 5.f, 100000);
+    auto xs = audio_bench::make_range<float>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::sinh process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -331,7 +331,7 @@ inline auto bench_sinh() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -339,12 +339,12 @@ inline auto bench_sinh() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_cosh() -> void
 {
-    auto xs = audio_bench::make_range(-5.f, 5.f, 100000);
+    auto xs = audio_bench::make_range<float>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::cosh process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -360,7 +360,7 @@ inline auto bench_cosh() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -368,12 +368,12 @@ inline auto bench_cosh() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
 
 inline auto bench_tanh() -> void
 {
-    auto xs = audio_bench::make_range(-5.f, 5.f, 100000);
+    auto xs = audio_bench::make_range<float>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Lambda_timer("std::tanh process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -389,7 +389,7 @@ inline auto bench_tanh() -> void
         }
     });
 
-    using enum audio_bench::Bench_units;
+    using enum audio_bench::Time_units;
 
     const auto stats_std = t_std.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_std);
@@ -397,5 +397,5 @@ inline auto bench_tanh() -> void
     const auto stats_vsl = t_vsl.run({.units = microseconds});
     audio_bench::print_bench_stats(stats_vsl);
 
-    audio_bench::compare_benchmarks(stats_std, stats_vsl);
+    audio_bench::compare_bench_stats(stats_std, stats_vsl);
 }
