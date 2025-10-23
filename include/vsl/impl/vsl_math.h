@@ -576,10 +576,10 @@ template<typename X, typename C>
 force_inline constexpr auto min(X a, C b) -> X
 {
     if constexpr (is_vector_v<X>) {
-        return X::min(a, X{b});
+        return X::min(a, X(b));
     }
     else {
-        return select(a < b, a, X{b});
+        return select(a < b, a, X(b));
     }
 }
 
@@ -590,10 +590,10 @@ template<typename X, typename C>
 force_inline constexpr auto max(X a, C b) -> X
 {
     if constexpr (is_vector_v<X>) {
-        return X::max(a, X{b});
+        return X::max(a, X(b));
     }
     else {
-        return select(a > b, a, X{b});
+        return select(a > b, a, X(b));
     }
 }
 
