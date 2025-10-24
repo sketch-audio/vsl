@@ -1,33 +1,36 @@
 #pragma once
 
-#include <cassert>
-#include "vsl/vsl.h"
+#include <format>
+
+#include <vsl/vsl.h>
+#include <audio_bench/audio_bench.h>
 
 template<typename S, typename V, vsl::Random_engine Engine>
 inline auto test_engine() -> void
 {
-    {
-        // Test that scalar and vector generators give the same output for the same seed.
+    // Scalar vs vector equality for same seed
+    audio_bench::add_test("random - scalar/vector equality", []() {
         auto srng = vsl::Random_gen<S, Engine>{};
         auto vrng = vsl::Random_gen<V, Engine>{};
         srng.reset();
         vrng.reset();
+
         auto sprev = S{};
         for (size_t i = 0; i < 10000; ++i) {
             const auto s = srng.next();
             const auto v = vrng.next();
-            assert(s >= 0 && s <= 1 && "Scalar output in [0, 1].");
-            assert(s != sprev && "No repeats in scalar output.");
+            audio_bench::expect_true((s >= 0 && s <= 1), std::format("Scalar output in [0,1], got {}", s));
+            audio_bench::expect_true((s != sprev), "No repeats in scalar output");
 
             for (size_t j = 0; j < V::num_lanes; ++j) {
-                assert(s == v[j] && "Scalar and vector outputs the same.");
+                audio_bench::expect_true(s == v[j], "Scalar and vector outputs the same");
             }
             sprev = s;
         }
-    }
+    });
 
-    {
-        // Test that outputs are in min/max range.
+    // Range test
+    audio_bench::add_test("random - min/max range", []() {
         const auto min = S{5};
         const auto max = S{10};
         auto srng = vsl::Random_gen<S>{min, max};
@@ -38,15 +41,15 @@ inline auto test_engine() -> void
         for (size_t i = 0; i < 1000; ++i) {
             const auto s = srng.next();
             const auto v = vrng.next();
-            assert((s >= min && s <= max) && "Scalar output in [min, max].");
+            audio_bench::expect_true((s >= min && s <= max), "Scalar output in [min, max]");
             for (size_t j = 0; j < V::num_lanes; ++j) {
-                assert((v[j] >= min && v[j] <= max) && "Vector output in [min, max].");
+                audio_bench::expect_true((v[j] >= min && v[j] <= max), "Vector output in [min, max]");
             }
         }
-    }
+    });
 
-    {
-        // Test that vector generator with vector seed gives different outputs per lane.
+    // Per-lane variability with vector seed
+    audio_bench::add_test("random - per-lane variability", []() {
         auto make_seed = []() {
             using M = vsl::mask_t<V>;
             if constexpr (M::num_lanes == 2) {
@@ -57,6 +60,7 @@ inline auto test_engine() -> void
                 static_assert(vsl::deferred_false_v<M>, "Unhandled number of lanes.");
             }
         };
+
         auto vrng = vsl::Random_gen<V>{make_seed()};
         vrng.reset();
 
@@ -64,11 +68,11 @@ inline auto test_engine() -> void
             const auto x = vrng.next();
             for (size_t j = 0; j < V::num_lanes; ++j) {
                 for (size_t k = j + 1; k < V::num_lanes; ++k) {
-                    assert((x[j] != x[k]) && "Different lanes give different outputs.");
+                    audio_bench::expect_true((x[j] != x[k]), "Different lanes give different outputs");
                 }
             }
         }
-    }
+    });
 }
 
 inline auto test_random() -> void

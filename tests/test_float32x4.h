@@ -1,164 +1,111 @@
 #pragma once
 
-#include <cassert>
-#include "vsl/vsl.h"
+#include <vsl/vsl.h>
+#include <audio_bench/audio_bench.h>
 
 inline auto test_float32x4() -> void
 {
-    {
-        // Default constructor.
+    audio_bench::add_test("float32x4 - constructors and access", []() {
+        // Default constructor
         auto vec = vsl::float32x4{};
-        assert(vec[0] == 0);
-        assert(vec[1] == 0);
-        assert(vec[2] == 0);
-        assert(vec[3] == 0);
-    }
+        audio_bench::expect_true(vsl::all(vec == 0), "Default constructor should zero lanes");
 
-    {
-        // Construct with a single value.
-        auto vec = vsl::float32x4{3.5f};
-        assert(vec[0] == 3.5f);
-        assert(vec[1] == 3.5f);
-        assert(vec[2] == 3.5f);
-        assert(vec[3] == 3.5f);
-    }
+        // Single value
+        vec = vsl::float32x4{3.5f};
+        audio_bench::expect_true(vsl::all(vec == 3.5f), "Ctor single value should set all lanes");
 
-    {
-        // Construct with an array.
-        auto vec = vsl::float32x4{2.5f, 7.5f, 11.5f, 13.5f};
-        assert(vec[0] == 2.5f);
-        assert(vec[1] == 7.5f);
-        assert(vec[2] == 11.5f);
-        assert(vec[3] == 13.5f);
-    }
+        // Array constructor
+        vec = vsl::float32x4{2.5f, 7.5f, 11.5f, 13.5f};
+        audio_bench::expect_true(vec[0] == 2.5f, "Fail ctor array lane 0");
+        audio_bench::expect_true(vec[1] == 7.5f, "Fail ctor array lane 1");
+        audio_bench::expect_true(vec[2] == 11.5f, "Fail ctor array lane 2");
+        audio_bench::expect_true(vec[3] == 13.5f, "Fail ctor array lane 3");
+    });
 
-    {
-        // Addition.
+    audio_bench::add_test("float32x4 - arithmetic ops", []() {
+        // Addition
         auto a = vsl::float32x4{2.5f, 7.5f, 11.5f, 13.5f};
         auto b = vsl::float32x4{7.5f, 2.5f, 3.5f, 1.5f};
         auto c = a + b;
-        assert(c[0] == 10.f);
-        assert(c[1] == 10.f);
-        assert(c[2] == 15.f);
-        assert(c[3] == 15.f);
-    }
+        audio_bench::expect_true(c[0] == 10, "add lane 0");
+        audio_bench::expect_true(c[1] == 10, "add lane 1");
+        audio_bench::expect_true(c[2] == 15, "add lane 2");
+        audio_bench::expect_true(c[3] == 15, "add lane 3");
 
-    {
-        // Scalar addition.
-        auto a = vsl::float32x4{1.5f, 2.5f, 3.5f, 4.5f};
-        auto b = 5.f + a;
-        auto c = a + 5.f;
-        assert(b[0] == c[0]);
-        assert(c[0] == 6.5f);
-        assert(b[1] == c[1]);
-        assert(c[1] == 7.5f);
-        assert(b[2] == c[2]);
-        assert(c[2] == 8.5f);
-        assert(b[3] == c[3]);
-        assert(c[3] == 9.5f);
-    }
+        // Scalar addition
+        a = vsl::float32x4{1.5f, 2.5f, 3.5f, 4.5f};
+        const auto s1 = 5 + a;
+        const auto s2 = a + 5;
+        audio_bench::expect_true(s1[0] == s2[0], "scalar add commutative lane 0");
+        audio_bench::expect_true(s2[0] == 6.5f, "scalar add value lane 0");
 
-    {
-        // Subtraction.
-        auto a = vsl::float32x4{10.5f, 8.5f, 15.5f, 20.5f};
-        auto b = vsl::float32x4{4.5f, 12.5f, 5.5f, 25.5f};
-        auto c = a - b;
-        assert(c[0] == 6.f);
-        assert(c[1] == -4.f);
-        assert(c[2] == 10.f);
-        assert(c[3] == -5.f);
-        auto d = -a;
-        assert(d[0] == -10.5f);
-        assert(d[1] == -8.5f);
-        assert(d[2] == -15.5f);
-        assert(d[3] == -20.5f);
-    }
+        // Subtraction and negation
+        a = vsl::float32x4{10.5f, 8.5f, 15.5f, 20.5f};
+        b = vsl::float32x4{4.5f, 12.5f, 5.5f, 25.5f};
+        c = a - b;
+        audio_bench::expect_true(c[0] == 6, "sub lane 0");
+        audio_bench::expect_true(c[1] == -4, "sub lane 1");
+        audio_bench::expect_true(c[2] == 10, "sub lane 2");
+        audio_bench::expect_true(c[3] == -5, "sub lane 3");
+        const auto d = -a;
+        audio_bench::expect_true(d[0] == -10.5f, "neg lane 0");
 
-    {
-        // Scalar subtraction.
-        auto a = vsl::float32x4{1.5f, 2.5f, 3.5f, 4.5f};
-        auto b = 5.f - a;
-        auto c = a - 5.f;
-        assert(b[0] == 3.5f);
-        assert(c[0] == -3.5f);
-        assert(b[1] == 2.5f);
-        assert(c[1] == -2.5f);
-        assert(b[2] == 1.5f);
-        assert(c[2] == -1.5f);
-        assert(b[3] == 0.5f);
-        assert(c[3] == -0.5f);
-    }
+        // Scalar subtraction
+        a = vsl::float32x4{1.5f, 2.5f, 3.5f, 4.5f};
+        const auto r1 = 5 - a;
+        const auto r2 = a - 5;
+        audio_bench::expect_true(r1[0] == 3.5f, "scalar sub lane 0");
+        audio_bench::expect_true(r2[0] == -3.5f, "scalar sub lane 0 neg");
 
-    {
-        // Multiplication.
-        auto a = vsl::float32x4{2.f, 3.f, 4.f, 5.f};
-        auto b = vsl::float32x4{4.f, 5.f, 6.f, 7.f};
-        auto c = a * b;
-        assert(c[0] == 8.f);
-        assert(c[1] == 15.f);
-        assert(c[2] == 24.f);
-        assert(c[3] == 35.f);
-    }
+        // Multiplication
+        a = vsl::float32x4{2, 3, 4, 5};
+        b = vsl::float32x4{4, 5, 6, 7};
+        c = a * b;
+        audio_bench::expect_true(c[0] == 8, "mul lane 0");
+        audio_bench::expect_true(c[1] == 15, "mul lane 1");
+        audio_bench::expect_true(c[2] == 24, "mul lane 2");
+        audio_bench::expect_true(c[3] == 35, "mul lane 3");
 
-    {
-        // Scalar multiplication.
-        auto a = vsl::float32x4{2.f, 3.f, 4.f, 5.f};
-        auto b = 4.f * a;
-        auto c = a * 4.f;
-        assert(b[0] == c[0]);
-        assert(c[0] == 8.f);
-        assert(b[1] == c[1]);
-        assert(c[1] == 12.f);
-        assert(b[2] == c[2]);
-        assert(c[2] == 16.f);
-        assert(b[3] == c[3]);
-        assert(c[3] == 20.f);
-    }
+        // Scalar multiplication
+        a = vsl::float32x4{2, 3, 4, 5};
+        const auto m1 = 4 * a;
+        const auto m2 = a * 4;
+        audio_bench::expect_true(m1[0] == m2[0], "scalar mul comm lane 0");
+        audio_bench::expect_true(m1[0] == 8, "scalar mul value lane 0");
 
-    {
-        // Division.
-        auto a = vsl::float32x4{8.f, 15.f, 24.f, 35.f};
-        auto b = vsl::float32x4{2.f, 3.f, 4.f, 5.f};
-        auto c = a / b;
-        assert(c[0] == 4.f);
-        assert(c[1] == 5.f);
-        assert(c[2] == 6.f);
-        assert(c[3] == 7.f);
-    }
+        // Division
+        a = vsl::float32x4{8, 15, 24, 35};
+        b = vsl::float32x4{2, 3, 4, 5};
+        c = a / b;
+        audio_bench::expect_true(c[0] == 4, "div lane 0");
 
-    {
-        // Scalar division.
-        auto a = vsl::float32x4{8.f, 15.f, 24.f, 35.f};
-        auto b = a / 2.f;
-        assert(b[0] == 4.f);
-        assert(b[1] == 7.5f);
-        assert(b[2] == 12.f);
-        assert(b[3] == 17.5f);
-    }
+        // Scalar division
+        const auto sd = a / 2;
+        audio_bench::expect_true(sd[0] == 4, "scalar div lane 0");
+    });
 
-    {
-        // Compare, select
-        auto a = vsl::float32x4{8.f, 15.f, 24.f, 35.f};
-        auto t = vsl::float32x4{2.f};
-        auto f = vsl::float32x4{5.f};
+    audio_bench::add_test("float32x4 - compare & select", []() {
+        auto a = vsl::float32x4{8, 15, 24, 35};
+        const auto t = vsl::float32x4{2};
+        const auto f = vsl::float32x4{5};
 
-        auto x0 = vsl::select(a == 15.f, t, f);
-        auto x1 = vsl::select(a != 15.f, t, f);
-        auto x2 = vsl::select(a < 20.f, t, f);
-        auto x3 = vsl::select(a <= 8.f, t, f);
-        auto x4 = vsl::select(a > 20.f, t, f);
-        auto x5 = vsl::select(a >= 35.f, t, f);
+        const auto x0 = vsl::select(a == 15, t, f);
+        const auto x1 = vsl::select(a != 15, t, f);
+        const auto x2 = vsl::select(a < 20, t, f);
+        const auto x3 = vsl::select(a <= 8, t, f);
+        const auto x4 = vsl::select(a > 20, t, f);
+        const auto x5 = vsl::select(a >= 35, t, f);
 
-        assert((x0[0] == 5.f) && (x0[1] == 2.f) && (x0[2] == 5.f) && (x0[3] == 5.f));
-        assert((x1[0] == 2.f) && (x1[1] == 5.f) && (x1[2] == 2.f) && (x1[3] == 2.f));
-        assert((x2[0] == 2.f) && (x2[1] == 2.f) && (x2[2] == 5.f) && (x2[3] == 5.f));
-        assert((x3[0] == 2.f) && (x3[1] == 5.f) && (x3[2] == 5.f) && (x3[3] == 5.f));
-        assert((x4[0] == 5.f) && (x4[1] == 5.f) && (x4[2] == 2.f) && (x4[3] == 2.f));
-        assert((x5[0] == 5.f) && (x5[1] == 5.f) && (x5[2] == 5.f) && (x5[3] == 2.f));
+        audio_bench::expect_true(x0[0] == 5 && x0[1] == 2 && x0[2] == 5 && x0[3] == 5, "select eq");
+        audio_bench::expect_true(x1[0] == 2 && x1[1] == 5 && x1[2] == 2 && x1[3] == 2, "select neq");
+        audio_bench::expect_true(x2[0] == 2 && x2[1] == 2 && x2[2] == 5 && x2[3] == 5, "select lt");
+        audio_bench::expect_true(x3[0] == 2 && x3[1] == 5 && x3[2] == 5 && x3[3] == 5, "select le");
+        audio_bench::expect_true(x4[0] == 5 && x4[1] == 5 && x4[2] == 2 && x4[3] == 2, "select gt");
+        audio_bench::expect_true(x5[0] == 5 && x5[1] == 5 && x5[2] == 5 && x5[3] == 2, "select ge");
 
-        assert(vsl::any(a == 15.f));
-        assert(!vsl::any(a < 4.f));
-        assert(vsl::all(a >= 2.f));
-        assert(!vsl::all(a > 8.f));
-    }
+        audio_bench::expect_true(vsl::any(a == 15), "any should be true for a == 15");
+        audio_bench::expect_true(!vsl::any(a < 4), "no lane should be < 4");
+        audio_bench::expect_true(vsl::all(a >= 2), "all lanes >= 2");
+        audio_bench::expect_true(!vsl::all(a > 8), "not all lanes > 8");
+    });
 }
