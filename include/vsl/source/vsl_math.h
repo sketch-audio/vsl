@@ -372,7 +372,7 @@ force_inline constexpr auto exp2(X x) -> X
 
     const auto int_part = float_to_signed(floor(x));
     const auto dec_part = x - signed_to_float(int_part);
-    const auto val = (int_part + exp_bias) << sig_bits;
+    const auto val = (signed_to_unsigned(int_part) + exp_bias) << sig_bits;
     const auto int_pow = reinterpret_as_float(val);
 
     // Minimax on 0...1
@@ -461,7 +461,8 @@ force_inline constexpr auto exp(X x) -> X
 
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
-    const auto bits = (float_to_signed(n) + exp_bias) << sig_bits;
+    const auto arg = signed_to_unsigned(float_to_signed(n));
+    const auto bits = (arg + exp_bias) << sig_bits;
     const auto two_pow = reinterpret_as_float(bits);
 
     // Going to 6th order gives us better results on our sinh/cosh tests.

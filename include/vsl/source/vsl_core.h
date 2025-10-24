@@ -1,11 +1,17 @@
 #pragma once
 
+#include <bit>
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 #include "vsl_impl.h"
 
 namespace vsl {
+
+// We need two's complement.
+static_assert(std::bit_cast<int32_t>(std::numeric_limits<uint32_t>::max()) == -1);
+static_assert(std::bit_cast<int64_t>(std::numeric_limits<uint64_t>::max()) == -1);
 
 template<typename T>
 struct deferred_false : std::false_type {};

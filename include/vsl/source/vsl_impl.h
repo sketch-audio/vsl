@@ -45,7 +45,7 @@ private:
 #if VSL_NEON
         return vld1q_dup_u64(&x);
 #elif VSL_SSE4
-        return _mm_set1_epi64x(x);
+        return _mm_set1_epi64x(std::bit_cast<int64_t>(x));
 #endif
     }
     
@@ -54,7 +54,7 @@ private:
 #if VSL_NEON
         return vld1q_u64(arr.data());
 #elif VSL_SSE4
-        return _mm_set_epi64x(arr[1], arr[0]);
+        return _mm_set_epi64x(std::bit_cast<int64_t>(arr[1]), std::bit_cast<int64_t>(arr[0]));
 #endif
     }
 
@@ -68,9 +68,9 @@ private:
         }
 #elif VSL_SSE4
         switch (i) {
-            case 0: return _mm_extract_epi64(data, 0);
-            case 1: return _mm_extract_epi64(data, 1);
-            default: return 0;
+            case 0: return std::bit_cast<Scalar>(_mm_extract_epi64(data, 0));
+            case 1: return std::bit_cast<Scalar>(_mm_extract_epi64(data, 1));
+            default: return Scalar{};
         }
 #endif
     }
@@ -444,7 +444,7 @@ private:
     static force_inline auto vector_call not_equal(Vector a, Vector b) -> Mask
     {
 #if VSL_NEON
-        return veorq_u64(equal(a, b), vdupq_n_u64(-1));
+        return veorq_u64(equal(a, b), vdupq_n_u64(0xffffffffffffffff));
 #elif VSL_SSE4
         return as_mask(_mm_cmpneq_pd(a, b));
 #endif
@@ -653,7 +653,7 @@ private:
 #if VSL_NEON
         return vld1q_dup_u32(&x);
 #elif VSL_SSE4
-        return _mm_set1_epi32(x);
+        return _mm_set1_epi32(std::bit_cast<int32_t>(x));
 #endif
     }
 
@@ -662,7 +662,7 @@ private:
 #if VSL_NEON
         return vld1q_u32(arr.data());
 #elif VSL_SSE4
-        return _mm_set_epi32(arr[3], arr[2], arr[1], arr[0]);
+        return _mm_set_epi32(std::bit_cast<int32_t>(arr[3]), std::bit_cast<int32_t>(arr[2]), std::bit_cast<int32_t>(arr[1]), std::bit_cast<int32_t>(arr[0]));
 #endif
     }
 
@@ -678,11 +678,11 @@ private:
         }
 #elif VSL_SSE4
         switch (i) {
-            case 0: return _mm_extract_epi32(data, 0);
-            case 1: return _mm_extract_epi32(data, 1);
-            case 2: return _mm_extract_epi32(data, 2);
-            case 3: return _mm_extract_epi32(data, 3);
-            default: return 0;
+            case 0: return std::bit_cast<Scalar>(_mm_extract_epi32(data, 0));
+            case 1: return std::bit_cast<Scalar>(_mm_extract_epi32(data, 1));
+            case 2: return std::bit_cast<Scalar>(_mm_extract_epi32(data, 2));
+            case 3: return std::bit_cast<Scalar>(_mm_extract_epi32(data, 3));
+            default: return Scalar{};
         }
 #endif
     }
@@ -1042,7 +1042,7 @@ private:
     static force_inline auto vector_call not_equal(Vector a, Vector b) -> Mask
     {
 #if VSL_NEON
-        return veorq_u32(equal(a, b), vdupq_n_u32(-1));
+        return veorq_u32(equal(a, b), vdupq_n_u32(0xffffffff));
 #elif VSL_SSE4
         return as_mask(_mm_cmpneq_ps(a, b));
 #endif
