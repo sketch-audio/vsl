@@ -193,6 +193,17 @@ inline auto test_math() -> void
         }
     });
 
+    audio_bench::add_test(" Test vsl::exp (extreme values).", []() {
+        auto xs = audio_bench::make_range<double>({-1000, 0, 10000});
+        for (auto x : xs) {
+            const auto v = vsl::exp(vsl::float64x2{x});
+            const auto s = std::exp(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            //audio_bench::expect_close(v[0], s, audio_bench::Abs_err{1e-2}, std::format("Fail exp({})", x), false);
+            audio_bench::expect_close(v[0], s, audio_bench::Rel_err{1e-3}, std::format("Fail exp({})", x), false);
+        }
+    });
+
     audio_bench::add_test(" Test vsl::exp.", []() {
         auto xs = audio_bench::make_range<float>({-10, 10, 100000});
         for (auto x : xs) {
