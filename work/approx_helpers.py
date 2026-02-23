@@ -25,7 +25,7 @@ def calc_pade(coeffs_desc, denom_deg):
     return p, q
 
 # Minimizes maximum relative error.
-def calc_minimax(fn, deg, lo, hi, a=0, m=10000, zero_tol=1e-6, min_rel=True):
+def calc_minimax(fn, deg, lo, hi, a=0, m=10000, zero_tol=1e-6, min_rel=True, pin_zero=False):
     # create arrays of x and y values
     x = np.linspace(lo, hi, m)
     y = fn(x)
@@ -56,7 +56,7 @@ def calc_minimax(fn, deg, lo, hi, a=0, m=10000, zero_tol=1e-6, min_rel=True):
         obj = cp.max(cp.abs(cp.multiply(A @ cp.transpose(V) - y, 1 / y)))
 
     # create some optional constraints
-    cons = [] # [A @ X(0) == fn(0), etc.]
+    cons = [A @ X(0) == fn(0)] if pin_zero else [] # [A @ X(0) == fn(0), etc.]
 
     # define the problem and solve
     problem = cp.Problem(cp.Minimize(obj), cons)
