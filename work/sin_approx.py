@@ -1,16 +1,19 @@
 import numpy as np
 import approx_helpers as approx
 
-f = np.sin
-order = 11
+scale = lambda x: (8 * x / (3 * np.pi) - 8 * x**3 / (3 * np.pi**3))
+f = lambda x: np.where(np.abs(x) < 1e-10, 3 * np.pi / 8, np.sin(x) / scale(x))
+order = 10
+lo = -np.pi+1e-7
+hi = np.pi-1e-7
+
+m_coeffs = approx.calc_minimax(f, order, lo, hi, min_rel=False)
+
 lo = -np.pi
 hi = np.pi
-
-m_coeffs = approx.calc_minimax(f, order, lo, hi)
-
 x = np.linspace(lo, hi, 1000)
-y = f(x)
-y_approx = approx.eval_poly(x, m_coeffs)
+y = np.sin(x)
+y_approx = scale(x) * approx.eval_poly(x, m_coeffs)
 
 print(f"Sine approximation, order {order} on [{lo}, {hi}]")
 approx.print_coeffs(m_coeffs, "Minimax")
