@@ -198,6 +198,32 @@ force_inline constexpr auto cos(X x) -> X
 
 static_assert(abs_equal(cos(0.f), 1.f));
 
+template<typename X>
+force_inline constexpr auto cos_v2(X x) -> X
+{
+    // https://mooooo.ooo/chebyshev-sine-approximation/
+    using S = scalar_t<X>;
+    constexpr auto pi = std::numbers::pi_v<S>;
+    x = impl::wrap_sym(x, pi);
+
+    // [-4.11217365e-09 -1.43526532e-16  6.29230644e-07  2.43059030e-15
+    //  -5.68236022e-05 -1.31467246e-14  3.13209043e-03  2.45952282e-14
+    //  -9.04463450e-02 -1.06985581e-14  9.54929659e-01]
+    const auto c0 = S(9.54929659e-01);
+    const auto c2 = S(-9.04463450e-02);
+    const auto c4 = S(3.13209043e-03);
+    const auto c6 = S(-5.68236022e-05);
+    const auto c8 = S(6.29230644e-07);
+    const auto c10 = S(-4.11217365e-09);
+
+    const auto x2 = x * x;
+    const auto k = S(-0.42441318157); // -4 / (3 * pi)
+    const auto scale = k * x2 + pi / 3;
+    const auto poly = c0 + x2 * (c2 + x2 * (c4 + x2 * (c6 + x2 * (c8 + x2 * c10))));
+
+    return scale * poly;
+}
+
 ///
 template<typename X>
 force_inline constexpr auto sin(X x) -> X
