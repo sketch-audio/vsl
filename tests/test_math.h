@@ -4,7 +4,7 @@
 #include <format>
 
 #include <vsl/vsl.h>
-#include <audio_bench/audio_bench.h>
+#include <audio_bench/audio_bench.hpp>
 
 template<typename T>
 using Tracker = audio_bench::Error_tracker<T>; // Dumb can't do this in function scope.

@@ -3,7 +3,7 @@
 #include <format>
 
 #include <vsl/vsl.h>
-#include <audio_bench/audio_bench.h>
+#include <audio_bench/audio_bench.hpp>
 
 template<typename S, typename V, vsl::Random_engine Engine>
 inline auto test_engine() -> void

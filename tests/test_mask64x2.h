@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vsl/vsl.h>
-#include <audio_bench/audio_bench.h>
+#include <audio_bench/audio_bench.hpp>
 
 inline auto test_mask64x2() -> void
 {

@@ -1,4 +1,4 @@
-#include <audio_bench/audio_bench.h>
+#include <audio_bench/audio_bench.hpp>
 
 #include "test_float32x4.h"
 #include "test_float64x2.h"
