@@ -5,7 +5,9 @@
 
 inline auto test_mask64x2() -> void
 {
-    audio_bench::add_test("mask64x2 - constructors and basic ops", []() {
+    using Tests = audio_bench::Tests;
+
+    Tests::add("mask64x2 - constructors and basic ops", []() {
         const auto v0 = vsl::mask64x2{};
         audio_bench::expect_true(vsl::all(v0 == 0), "Default constructor: all lanes zero");
 
@@ -17,7 +19,7 @@ inline auto test_mask64x2() -> void
         audio_bench::expect_true(ve[1] == 7, "Array constructor: lane 1");
     });
 
-    audio_bench::add_test("mask64x2 - arithmetic", []() {
+    Tests::add("mask64x2 - arithmetic", []() {
         const auto a = vsl::mask64x2{3, 7};
         const auto b = vsl::mask64x2{7, 5};
         const auto add = a + b;
@@ -57,7 +59,7 @@ inline auto test_mask64x2() -> void
         audio_bench::expect_true(mm_l[0] == mm_r[0] && mm_r[0] == 8, "Scalar multiplication: both lhs and rhs");
     });
 
-    audio_bench::add_test("mask64x2 - select & compare", []() {
+    Tests::add("mask64x2 - select & compare", []() {
         const auto a = vsl::mask64x2{3, 7};
         const auto t = vsl::mask64x2{2};
         const auto f = vsl::mask64x2{5};
@@ -77,7 +79,7 @@ inline auto test_mask64x2() -> void
         audio_bench::expect_true(x5[0] == 5 && x5[1] == 2, "select ge");
     });
 
-    audio_bench::add_test("mask64x2 - any/all & convert", []() {
+    Tests::add("mask64x2 - any/all & convert", []() {
         const auto a = vsl::mask64x2{3, 7};
         audio_bench::expect_true(vsl::any(a == 3), "any(): at least one lane is true");
         audio_bench::expect_true(!vsl::any(a < 0), "any(): no lanes are true");
@@ -89,7 +91,7 @@ inline auto test_mask64x2() -> void
         audio_bench::expect_true(f[0] == 8.0 && f[1] == 16.0, "Convert to float");
     });
 
-    audio_bench::add_test("mask64x2 - bitwise ops", []() {
+    Tests::add("mask64x2 - bitwise ops", []() {
         const auto a = vsl::mask64x2{0x0F0F0F0Fu, 0xFFFF0000u};
         const auto b = vsl::mask64x2{0x00FF00FFu, 0x0000FFFFu};
 

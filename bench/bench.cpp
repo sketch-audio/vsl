@@ -12,7 +12,7 @@ int main() {
     // bench_exp2();
     // bench_log2();
     // bench_exp();
-    bench_pow();
+    // bench_pow();
     // bench_sqrt();
     // bench_cosh();
     // bench_sinh();

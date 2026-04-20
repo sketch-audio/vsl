@@ -5,7 +5,9 @@
 
 inline auto test_mask32x4() -> void
 {
-    audio_bench::add_test("mask32x4 - constructors and basic ops", []() {
+    using Tests = audio_bench::Tests;
+
+    Tests::add("mask32x4 - constructors and basic ops", []() {
         // Default constructor
         const auto v0 = vsl::mask32x4{};
         audio_bench::expect_true(vsl::all(v0 == 0), "Default constructor: all lanes zero");
@@ -22,7 +24,7 @@ inline auto test_mask32x4() -> void
         audio_bench::expect_true(ve[3] == 13, "Array constructor: lane 3");
     });
 
-    audio_bench::add_test("mask32x4 - arithmetic", []() {
+    Tests::add("mask32x4 - arithmetic", []() {
         const auto a = vsl::mask32x4{3, 7, 11, 13};
         const auto b = vsl::mask32x4{7, 5, 3, 1};
         const auto add = a + b;
@@ -67,7 +69,7 @@ inline auto test_mask32x4() -> void
         audio_bench::expect_true(mm_l[0] == mm_r[0] && mm_r[0] == 8, "Scalar multiplication: both lhs and rhs");
     });
 
-    audio_bench::add_test("mask32x4 - select & compare", []() {
+    Tests::add("mask32x4 - select & compare", []() {
         const auto a = vsl::mask32x4{3, 7, 11, 13};
         const auto t = vsl::mask32x4{2};
         const auto f = vsl::mask32x4{5};
@@ -87,7 +89,7 @@ inline auto test_mask32x4() -> void
         audio_bench::expect_true(x5[0] == 5 && x5[1] == 5 && x5[2] == 5 && x5[3] == 2, "select ge");
     });
 
-    audio_bench::add_test("mask32x4 - any/all & convert", []() {
+    Tests::add("mask32x4 - any/all & convert", []() {
         const auto a = vsl::mask32x4{3, 7, 11, 13};
         audio_bench::expect_true(vsl::any(a == 3), "any(): at least one lane is true");
         audio_bench::expect_true(!vsl::any(a < 0), "any(): no lanes are true");
@@ -99,7 +101,7 @@ inline auto test_mask32x4() -> void
         audio_bench::expect_true(f[0] == 8.f && f[1] == 16.f && f[2] == 32.f && f[3] == 64.f, "Convert to float");
     });
 
-    audio_bench::add_test("mask32x4 - bitwise ops", []() {
+    Tests::add("mask32x4 - bitwise ops", []() {
         const auto a = vsl::mask32x4{0x0F0F0F0Fu, 0xFFFF0000u, 0xAAAAAAAAu, 0x55555555u};
         const auto b = vsl::mask32x4{0x00FF00FFu, 0x0000FFFFu, 0x33333333u, 0xCCCCCCCCu};
 

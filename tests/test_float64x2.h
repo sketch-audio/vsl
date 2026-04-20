@@ -5,7 +5,9 @@
 
 inline auto test_float64x2() -> void
 {
-    audio_bench::add_test("float64x2 - constructors and access", []() {
+    using Tests = audio_bench::Tests;
+
+    Tests::add("float64x2 - constructors and access", []() {
         auto v = vsl::float64x2{};
         audio_bench::expect_true(vsl::all(v == 0), "Default constructor should zero lanes");
 
@@ -17,7 +19,7 @@ inline auto test_float64x2() -> void
         audio_bench::expect_true(v[1] == 7.5, "ctor array lane 1");
     });
 
-    audio_bench::add_test("float64x2 - arithmetic ops", []() {
+    Tests::add("float64x2 - arithmetic ops", []() {
         auto a = vsl::float64x2{2.5, 7.5};
         auto b = vsl::float64x2{7.5, 2.5};
         auto c = a + b;
@@ -73,7 +75,7 @@ inline auto test_float64x2() -> void
         audio_bench::expect_true(sd2[1] == 8, "scalar div lane 1");
     });
 
-    audio_bench::add_test("float64x2 - compare & select", []() {
+    Tests::add("float64x2 - compare & select", []() {
         auto a = vsl::float64x2{8, 16};
         const auto t = vsl::float64x2{2};
         const auto f = vsl::float64x2{5};

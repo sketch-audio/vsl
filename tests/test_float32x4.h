@@ -5,7 +5,9 @@
 
 inline auto test_float32x4() -> void
 {
-    audio_bench::add_test("float32x4 - constructors and access", []() {
+    using Tests = audio_bench::Tests;
+    
+    Tests::add("float32x4 - constructors and access", []() {
         // Default constructor
         auto vec = vsl::float32x4{};
         audio_bench::expect_true(vsl::all(vec == 0), "Default constructor should zero lanes");
@@ -22,7 +24,7 @@ inline auto test_float32x4() -> void
         audio_bench::expect_true(vec[3] == 13.5f, "Fail ctor array lane 3");
     });
 
-    audio_bench::add_test("float32x4 - arithmetic ops", []() {
+    Tests::add("float32x4 - arithmetic ops", []() {
         // Addition
         auto a = vsl::float32x4{2.5f, 7.5f, 11.5f, 13.5f};
         auto b = vsl::float32x4{7.5f, 2.5f, 3.5f, 1.5f};
@@ -84,7 +86,7 @@ inline auto test_float32x4() -> void
         audio_bench::expect_true(sd[0] == 4, "scalar div lane 0");
     });
 
-    audio_bench::add_test("float32x4 - compare & select", []() {
+    Tests::add("float32x4 - compare & select", []() {
         auto a = vsl::float32x4{8, 15, 24, 35};
         const auto t = vsl::float32x4{2};
         const auto f = vsl::float32x4{5};

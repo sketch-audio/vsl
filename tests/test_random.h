@@ -8,8 +8,10 @@
 template<typename S, typename V, vsl::Random_engine Engine>
 inline auto test_engine() -> void
 {
+    using Tests = audio_bench::Tests;
+
     // Scalar vs vector equality for same seed
-    audio_bench::add_test("random - scalar/vector equality", []() {
+    Tests::add("random - scalar/vector equality", []() {
         auto srng = vsl::Random_gen<S, Engine>{};
         auto vrng = vsl::Random_gen<V, Engine>{};
         srng.reset();
@@ -30,7 +32,7 @@ inline auto test_engine() -> void
     });
 
     // Range test
-    audio_bench::add_test("random - min/max range", []() {
+    Tests::add("random - min/max range", []() {
         const auto min = S{5};
         const auto max = S{10};
         auto srng = vsl::Random_gen<S>{min, max};
@@ -49,7 +51,7 @@ inline auto test_engine() -> void
     });
 
     // Per-lane variability with vector seed
-    audio_bench::add_test("random - per-lane variability", []() {
+    Tests::add("random - per-lane variability", []() {
         auto make_seed = []() {
             using M = vsl::mask_t<V>;
             if constexpr (M::num_lanes == 2) {
