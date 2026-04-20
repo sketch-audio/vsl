@@ -65,7 +65,7 @@ force_inline constexpr auto unsigned_to_float(X x)
     }
 }
 
-template<FloatingPoint X>
+template<Floating_point X>
 force_inline constexpr auto float_to_signed(X x)
 {
     if constexpr (is_vector_v<X>) {
@@ -98,7 +98,7 @@ force_inline constexpr auto reinterpret_as_float(X x) -> float_t<X>
     return std::bit_cast<F>(x);
 }
 
-template<FloatingPoint X>
+template<Floating_point X>
 force_inline constexpr auto reinterpret_as_int(X x) -> unsigned_t<X>
 {
     using U = unsigned_t<X>;

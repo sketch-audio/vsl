@@ -67,7 +67,7 @@ template<typename T>
 inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
 
 template<typename T>
-concept FloatingPoint = is_floating_point_v<T>;
+concept Floating_point = is_floating_point_v<T>;
 
 // MARK: - float equivalent
 
