@@ -24,12 +24,28 @@ inline auto test_math() -> void
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
         }
+
+        auto xs_d = Range::make<double>({-10, 10, 100000});
+        for (auto x : xs_d) {
+            const auto v = vsl::abs(vsl::float64x2{x});
+            const auto s = std::abs(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_true(v[0] == s);
+        }
     });
 
     Tests::add("Test vsl::trunc.", []() {
         auto xs = Range::make<float>({-10, 10, 100000});
         for (auto x : xs) {
             const auto v = vsl::trunc(vsl::float32x4{x});
+            const auto s = std::trunc(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_true(v[0] == s);
+        }
+
+        auto xs_d = Range::make<double>({-10, 10, 100000});
+        for (auto x : xs_d) {
+            const auto v = vsl::trunc(vsl::float64x2{x});
             const auto s = std::trunc(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
@@ -44,6 +60,14 @@ inline auto test_math() -> void
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
         }
+
+        auto xs_d = Range::make<double>({-10, 10, 100000});
+        for (auto x : xs_d) {
+            const auto v = vsl::floor(vsl::float64x2{x});
+            const auto s = std::floor(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_true(v[0] == s);
+        }
     });
 
     Tests::add("Test vsl::ceil.", []() {
@@ -54,12 +78,28 @@ inline auto test_math() -> void
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
         }
+
+        auto xs_d = Range::make<double>({-10, 10, 100000});
+        for (auto x : xs_d) {
+            const auto v = vsl::ceil(vsl::float64x2{x});
+            const auto s = std::ceil(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_true(v[0] == s);
+        }
     });
 
     Tests::add("Test vsl::round.", []() {
         auto xs = Range::make<float>({-10, 10, 100000});
         for (auto x : xs) {
             const auto v = vsl::round(vsl::float32x4{x});
+            const auto s = std::round(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_true(v[0] == s);
+        }
+
+        auto xs_d = Range::make<double>({-10, 10, 100000});
+        for (auto x : xs_d) {
+            const auto v = vsl::round(vsl::float64x2{x});
             const auto s = std::round(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
