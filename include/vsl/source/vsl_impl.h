@@ -559,6 +559,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call abs(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vabsq_f64(x);
+#elif VSL_SSE4
+        return _mm_andnot_pd(_mm_set1_pd(-0.), x);
+#endif
+    }
+
     static force_inline auto vector_call sqrt(Vector x) -> Vector
     {
 #if VSL_NEON
@@ -624,6 +633,7 @@ public:
     static force_inline auto vector_call floor(float64x2 x) noexcept -> float64x2 { return floor(x.data); }
     static force_inline auto vector_call ceil(float64x2 x) noexcept -> float64x2 { return ceil(x.data); }
     static force_inline auto vector_call round(float64x2 x) noexcept -> float64x2 { return round(x.data); }
+    static force_inline auto vector_call abs(float64x2 x) noexcept -> float64x2 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float64x2 x) noexcept -> float64x2 { return sqrt(x.data); }
     static force_inline auto vector_call min(float64x2 a, float64x2 b) noexcept -> float64x2 { return min(a.data, b.data); }
@@ -1149,6 +1159,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call abs(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vabsq_f32(x);
+#elif VSL_SSE4
+        return _mm_andnot_ps(_mm_set1_ps(-0.f), x);
+#endif
+    }
+
     static force_inline auto vector_call sqrt(Vector x) -> Vector
     {
 #if VSL_NEON
@@ -1214,6 +1233,7 @@ public:
     static force_inline auto vector_call floor(float32x4 x) noexcept -> float32x4 { return floor(x.data); }
     static force_inline auto vector_call ceil(float32x4 x) noexcept -> float32x4 { return ceil(x.data); }
     static force_inline auto vector_call round(float32x4 x) noexcept -> float32x4 { return round(x.data); }
+    static force_inline auto vector_call abs(float32x4 x) noexcept -> float32x4 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float32x4 x) noexcept -> float32x4 { return sqrt(x.data); }
     static force_inline auto vector_call min(float32x4 a, float32x4 b) noexcept -> float32x4 { return min(a.data, b.data); }
