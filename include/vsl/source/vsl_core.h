@@ -222,6 +222,45 @@ struct scalar_equivalent<float64x2> { using type = double; };
 template<typename T>
 using scalar_t = typename scalar_equivalent<T>::type;
 
+// MARK: - vector_equivalent
+
+template<typename T>
+struct vector_equivalent { static_assert(deferred_false_v<T>); };
+
+template<>
+struct vector_equivalent<uint32_t> { using type = mask32x4; };
+
+template<>
+struct vector_equivalent<int32_t> { using type = mask32x4; };
+
+template<>
+struct vector_equivalent<uint64_t> { using type = mask64x2; };
+
+template<>
+struct vector_equivalent<int64_t> { using type = mask64x2; };
+
+template<>
+struct vector_equivalent<float> { using type = float32x4; };
+
+template<>
+struct vector_equivalent<double> { using type = float64x2; };
+
+template<>
+struct vector_equivalent<mask32x4> { using type = mask32x4; };
+
+template<>
+struct vector_equivalent<mask64x2> { using type = mask64x2; };
+
+template<>
+struct vector_equivalent<float32x4> { using type = float32x4; };
+
+template<>
+struct vector_equivalent<float64x2> { using type = float64x2; };
+
+// Resolves to the vector type with the same bit width as T
+template<typename T>
+using vector_t = typename vector_equivalent<T>::type;
+
 // MARK: - true/false (scalar) masks
 
 template<Scalar T>
