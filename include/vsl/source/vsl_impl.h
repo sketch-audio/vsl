@@ -577,6 +577,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call rsqrt(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrsqrteq_f64(x);
+#elif VSL_SSE4
+        return _mm_rsqrt_pd(x);
+#endif
+    }
+
     static force_inline auto vector_call min(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
@@ -636,6 +645,7 @@ public:
     static force_inline auto vector_call abs(float64x2 x) noexcept -> float64x2 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float64x2 x) noexcept -> float64x2 { return sqrt(x.data); }
+    static force_inline auto vector_call rsqrt(float64x2 x) noexcept -> float64x2 { return rsqrt(x.data); }
     static force_inline auto vector_call min(float64x2 a, float64x2 b) noexcept -> float64x2 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float64x2 a, float64x2 b) noexcept -> float64x2 { return max(a.data, b.data); }
 
@@ -1177,6 +1187,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call rsqrt(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrsqrteq_f32(x);
+#elif VSL_SSE4
+        return _mm_rsqrt_ps(x);
+#endif
+    }
+
     static force_inline auto vector_call min(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
@@ -1236,6 +1255,7 @@ public:
     static force_inline auto vector_call abs(float32x4 x) noexcept -> float32x4 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float32x4 x) noexcept -> float32x4 { return sqrt(x.data); }
+    static force_inline auto vector_call rsqrt(float32x4 x) noexcept -> float32x4 { return rsqrt(x.data); }
     static force_inline auto vector_call min(float32x4 a, float32x4 b) noexcept -> float32x4 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float32x4 a, float32x4 b) noexcept -> float32x4 { return max(a.data, b.data); }
 
