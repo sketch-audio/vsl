@@ -10,7 +10,7 @@ A header-only C++20 SIMD math library. All functions operate uniformly across sc
 ## Usage
 
 ```cpp
-#include <vsl/vsl.h>
+#include <vsl/vsl.hpp>
 
 const auto x0 = vsl::float32x4{1.f}; // All lanes contain 1.f.
 const auto x1 = vsl::float32x4{1.f, 2.f, 3.f, 4.f};

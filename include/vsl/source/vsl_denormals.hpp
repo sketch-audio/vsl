@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vsl_impl.h"
+#include "vsl_impl.hpp"
 
 namespace vsl {
 

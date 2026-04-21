@@ -1,8 +1,8 @@
 #pragma once
 
-#include "vsl_conv.h"
-#include "vsl_core.h"
-#include "vsl_logic.h" // select
+#include "vsl_conv.hpp"
+#include "vsl_core.hpp"
+#include "vsl_logic.hpp" // select
 
 namespace vsl {
 

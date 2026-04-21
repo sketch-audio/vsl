@@ -2,7 +2,7 @@
 
 #include <bit> // bit_cast
 
-#include "vsl_core.h"
+#include "vsl_core.hpp"
 
 namespace vsl {
 

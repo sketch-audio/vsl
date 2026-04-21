@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vsl/vsl.h>
+#include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
 inline auto test_float64x2() -> void

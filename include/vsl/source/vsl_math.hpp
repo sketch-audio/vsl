@@ -5,8 +5,8 @@
 #include <cmath>
 #include <numbers>
 
-#include "vsl_core.h"
-#include "vsl_logic.h"
+#include "vsl_core.hpp"
+#include "vsl_logic.hpp"
 
 namespace vsl {
 

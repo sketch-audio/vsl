@@ -2,8 +2,8 @@
 
 #include <bit> // std::countl_zero
 
-#include "vsl_conv.h"
-#include "vsl_core.h"
+#include "vsl_conv.hpp"
+#include "vsl_core.hpp"
 
 namespace vsl {
 

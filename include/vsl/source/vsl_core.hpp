@@ -5,7 +5,7 @@
 #include <limits>
 #include <type_traits>
 
-#include "vsl_impl.h"
+#include "vsl_impl.hpp"
 
 namespace vsl {
 

@@ -1,11 +1,11 @@
 #include <audio_bench/audio_bench.hpp>
 
-#include "test_float32x4.h"
-#include "test_float64x2.h"
-#include "test_mask32x4.h"
-#include "test_mask64x2.h"
-#include "test_math.h"
-#include "test_random.h"
+#include "test_float32x4.hpp"
+#include "test_float64x2.hpp"
+#include "test_mask32x4.hpp"
+#include "test_mask64x2.hpp"
+#include "test_math.hpp"
+#include "test_random.hpp"
 
 auto main() -> int
 {

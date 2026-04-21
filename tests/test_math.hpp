@@ -3,7 +3,7 @@
 #include <cmath>
 #include <format>
 
-#include <vsl/vsl.h>
+#include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
 template<typename T>

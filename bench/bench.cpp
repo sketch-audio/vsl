@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "source/bench_math.h"
+#include "source/bench_math.hpp"
 
 int main() {
     std::cout << "\nRunning VSL benchmarks...\n\n";
