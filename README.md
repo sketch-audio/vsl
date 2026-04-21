@@ -21,7 +21,7 @@ const auto s = vsl::exp(2.); // Scalar works too.
 
 ## Vector types
 
-Four concrete SIMD types are defined in `vsl_impl.h`, each wrapping the platform intrinsic type (`float32x4_t` / `__m128`, etc.):
+Four concrete SIMD types are defined in `vsl_impl.hpp`, each wrapping the platform intrinsic type (`float32x4_t` / `__m128`, etc.):
 
 | Type | Lanes | Element |
 |---|---|---|
@@ -34,7 +34,7 @@ All four types support arithmetic operators (`+`, `-`, `*`, `/`), comparison ope
 
 ## Type traits
 
-`vsl_core.h` provides traits and aliases for working generically across scalar and vector types:
+`vsl_core.hpp` provides traits and aliases for working generically across scalar and vector types:
 
 - `scalar_t<T>` — the scalar element type (`float32x4` → `float`)
 - `vector_t<T>` — the vector counterpart of a scalar (`float` → `float32x4`)
@@ -49,7 +49,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 
 ## Conversions
 
-`vsl_conv.h` provides branchless conversion functions that work on both scalar and vector types:
+`vsl_conv.hpp` provides branchless conversion functions that work on both scalar and vector types:
 
 - `reinterpret_as_float(x)` / `reinterpret_as_int(x)` — bit-cast between float and integer
 - `unsigned_to_float(x)` / `signed_to_float(x)` — integer-to-float cast (static_cast semantics)
@@ -59,7 +59,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 
 ## Logic
 
-`vsl_logic.h` provides branchless logic utilities that are scalar/vector transparent:
+`vsl_logic.hpp` provides branchless logic utilities that are scalar/vector transparent:
 
 - `select(cond, val_t, val_f)` — vector-compatible ternary; maps to `vbslq` / `_mm_blendv` on vectors, ternary on scalars
 - `any(cond)` — true if any lane is set
@@ -73,7 +73,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 
 ## Math
 
-`vsl_math.h` provides transcendental and rounding functions, all templated on the float type:
+`vsl_math.hpp` provides transcendental and rounding functions, all templated on the float type:
 
 | Function | Notes |
 |---|---|
@@ -99,7 +99,7 @@ Approximation coefficients were derived by Claude (Anthropic) using Python scrip
 
 ## Random number generation
 
-`vsl_rand.h` provides `Random_gen<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
+`vsl_rand.hpp` provides `Random_gen<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
 
 Two engines are available via the `Random_engine` enum:
 
@@ -115,7 +115,7 @@ rng.reset();  // restore to seed state, optionally masked per-lane
 
 ## Complex numbers
 
-`vsl_complex.h` provides `Complex<X>`, a simple complex number type templated on any arithmetic type including the SIMD vector types. Supports `+`, `-`, `*`, `/` between complex values and between complex and scalar.
+`vsl_complex.hpp` provides `Complex<X>`, a simple complex number type templated on any arithmetic type including the SIMD vector types. Supports `+`, `-`, `*`, `/` between complex values and between complex and scalar.
 
 ```cpp
 using Cplex = vsl::Complex<vsl::float32x4>;
@@ -125,7 +125,7 @@ const auto w = z * z;
 
 ## Denormals
 
-`vsl_denormals.h` provides `No_denormals`, an RAII guard that sets the flush-to-zero and denormals-are-zero flags on x86 (SSE MXCSR) for the duration of its scope. On NEON the struct is a no-op.
+`vsl_denormals.hpp` provides `No_denormals`, an RAII guard that sets the flush-to-zero and denormals-are-zero flags on x86 (SSE MXCSR) for the duration of its scope. On NEON the struct is a no-op.
 
 ```cpp
 {
