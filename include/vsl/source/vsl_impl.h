@@ -582,7 +582,7 @@ private:
 #if VSL_NEON
         return vrsqrteq_f64(x);
 #elif VSL_SSE4
-        return _mm_rsqrt_pd(x);
+        return _mm_div_pd(_mm_set1_pd(1.0), _mm_sqrt_pd(x));
 #endif
     }
 
