@@ -1,14 +1,34 @@
 #pragma once
 
+#include <cmath>
+#include <numbers>
+
 #include <vsl/vsl.h>
 #include <audio_bench/audio_bench.hpp>
 
 // MARK: - trig
 
+struct Bench {
+    // Should we bench the vector implementation? (Not used atm.)
+    static constexpr auto run_vector = false; 
+    using S = float;
+    using X = vsl::vector_t<Bench::S>;
+    static auto to_vec(const std::vector<Bench::S>& xs) -> std::vector<X>
+    {
+        auto v = std::vector<X>{};
+        v.reserve(xs.size());
+        for (auto x : xs) {
+            v.push_back(X(x));
+        }
+        return v;
+    }
+};
+
 inline auto bench_cos() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-10.f, 10.f, 100000});
+    constexpr auto pi = std::numbers::pi_v<Bench::S>;
+    auto xs = Range::make<Bench::S>({-pi, pi, 100000});
 
     auto t_std = audio_bench::Timer("std::cos process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -17,9 +37,9 @@ inline auto bench_cos() -> void
         }
     });
 
-    auto t_vsl = audio_bench::Timer("vsl::cos process 100000 floats", [&]() {
+    auto t_vsl = audio_bench::Timer("vsl::cos (no wrap) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::cos(x);
+            auto y = vsl::cos<false>(x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -37,7 +57,8 @@ inline auto bench_cos() -> void
 inline auto bench_sin() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-10.f, 10.f, 100000});
+    constexpr auto pi = std::numbers::pi_v<Bench::S>;
+    auto xs = Range::make<Bench::S>({-pi, pi, 100000});
 
     auto t_std = audio_bench::Timer("std::sin process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -46,9 +67,9 @@ inline auto bench_sin() -> void
         }
     });
 
-    auto t_vsl = audio_bench::Timer("vsl::sin process 100000 floats", [&]() {
+    auto t_vsl = audio_bench::Timer("vsl::sin (no wrap) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::sin(x);
+            auto y = vsl::sin<false>(x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -66,7 +87,8 @@ inline auto bench_sin() -> void
 inline auto bench_tan() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-10.f, 10.f, 100000});
+    constexpr auto pi_half = std::numbers::pi_v<Bench::S> / 2;
+    auto xs = Range::make<Bench::S>({-pi_half, pi_half, 100000});
 
     auto t_std = audio_bench::Timer("std::tan process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -75,9 +97,9 @@ inline auto bench_tan() -> void
         }
     });
 
-    auto t_vsl = audio_bench::Timer("vsl::tan process 100000 floats", [&]() {
+    auto t_vsl = audio_bench::Timer("vsl::tan (no wrap) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::tan(x);
+            auto y = vsl::tan<false>(x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -95,18 +117,18 @@ inline auto bench_tan() -> void
 inline auto bench_cos_2pi() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({0.f, 1.f, 100000});
+    auto xs = Range::make<Bench::S>({0.f, 1.f, 100000});
 
-    auto t_std = audio_bench::Timer("vsl::cos(2pi*x) process 100000 floats", [&]() {
+    auto t_std = audio_bench::Timer("std::cos(2pi*x) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::cos(2 * std::numbers::pi_v<float> * x);
+            auto y = std::cos(2 * std::numbers::pi_v<Bench::S> * x);
             audio_bench::do_not_optimize(y);
         }
     });
 
-    auto t_vsl = audio_bench::Timer("vsl::cos_2pi process 100000 floats", [&]() {
+    auto t_vsl = audio_bench::Timer("vsl::cos_2pi (no wrap) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::cos_2pi(x);
+            auto y = vsl::cos_2pi<false>(x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -124,18 +146,105 @@ inline auto bench_cos_2pi() -> void
 inline auto bench_sin_2pi() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({0.f, 1.f, 100000});
+    auto xs = Range::make<Bench::S>({0.f, 1.f, 100000});
 
-    auto t_std = audio_bench::Timer("vsl::sin(2pi*x) process 100000 floats", [&]() {
+    auto t_std = audio_bench::Timer("std::sin(2pi*x) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::sin(2 * std::numbers::pi_v<float> * x);
+            auto y = std::sin(2 * std::numbers::pi_v<Bench::S> * x);
             audio_bench::do_not_optimize(y);
         }
     });
 
-    auto t_vsl = audio_bench::Timer("vsl::sin_2pi process 100000 floats", [&]() {
+    auto t_vsl = audio_bench::Timer("vsl::sin_2pi (no wrap) process 100000 floats", [&]() {
         for (auto x : xs) {
-            auto y = vsl::sin_2pi(x);
+            auto y = vsl::sin_2pi<false>(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using Benchmark = audio_bench::Benchmark;
+
+    const auto stats_std = t_std.run({});
+    const auto stats_vsl = t_vsl.run({});
+
+    Benchmark::print(stats_std, Benchmark::Units::Microseconds);
+    Benchmark::print(stats_vsl, Benchmark::Units::Microseconds);
+    Benchmark::compare(stats_std, stats_vsl);
+}
+
+inline auto bench_acos() -> void
+{
+    using Range = audio_bench::signals::Range;
+    auto xs = Range::make<Bench::S>({-1.f, 1.f, 100000});
+
+    auto t_std = audio_bench::Timer("std::acos process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::acos(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Timer("vsl::acos process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = vsl::acos(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using Benchmark = audio_bench::Benchmark;
+
+    const auto stats_std = t_std.run({});
+    const auto stats_vsl = t_vsl.run({});
+
+    Benchmark::print(stats_std, Benchmark::Units::Microseconds);
+    Benchmark::print(stats_vsl, Benchmark::Units::Microseconds);
+    Benchmark::compare(stats_std, stats_vsl);
+}
+
+inline auto bench_asin()
+{
+    using Range = audio_bench::signals::Range;
+    auto xs = Range::make<Bench::S>({-1.f, 1.f, 100000});
+
+    auto t_std = audio_bench::Timer("std::asin process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::asin(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Timer("vsl::asin process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = vsl::asin(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    using Benchmark = audio_bench::Benchmark;
+
+    const auto stats_std = t_std.run({});
+    const auto stats_vsl = t_vsl.run({});
+
+    Benchmark::print(stats_std, Benchmark::Units::Microseconds);
+    Benchmark::print(stats_vsl, Benchmark::Units::Microseconds);
+    Benchmark::compare(stats_std, stats_vsl);
+}
+
+inline auto bench_atan() -> void
+{
+    using Range = audio_bench::signals::Range;
+    auto xs = Range::make<Bench::S>({-100.f, 100.f, 100000});
+
+    auto t_std = audio_bench::Timer("std::atan process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = std::atan(x);
+            audio_bench::do_not_optimize(y);
+        }
+    });
+
+    auto t_vsl = audio_bench::Timer("vsl::atan process 100000 floats", [&]() {
+        for (auto x : xs) {
+            auto y = vsl::atan(x);
             audio_bench::do_not_optimize(y);
         }
     });
@@ -155,7 +264,7 @@ inline auto bench_sin_2pi() -> void
 inline auto bench_exp2() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-10.f, 10.f, 100000});
+    auto xs = Range::make<Bench::S>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Timer("std::exp2 process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -184,7 +293,7 @@ inline auto bench_exp2() -> void
 inline auto bench_log2() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({0.0001f, 10000.f, 100000});
+    auto xs = Range::make<Bench::S>({0.0001f, 10000.f, 100000});
 
     auto t_std = audio_bench::Timer("std::log2 process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -215,7 +324,7 @@ inline auto bench_log2() -> void
 inline auto bench_exp() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-10.f, 10.f, 100000});
+    auto xs = Range::make<Bench::S>({-10.f, 10.f, 100000});
 
     auto t_std = audio_bench::Timer("std::exp process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -246,8 +355,8 @@ inline auto bench_exp() -> void
 inline auto bench_pow() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({0.0001f, 100.f, 1000});
-    auto ys = Range::make<float>({-10.f, 10.f, 100});
+    auto xs = Range::make<Bench::S>({0.0001f, 100.f, 1000});
+    auto ys = Range::make<Bench::S>({-10.f, 10.f, 100});
 
     std::vector<std::pair<float, float>> pairs;
     pairs.reserve(xs.size() * ys.size());
@@ -283,20 +392,9 @@ inline auto bench_pow() -> void
 
 inline auto bench_sqrt() -> void
 {
-    auto to_vec = [](const auto& range) {
-        using X = vsl::float32x4;
-        using S = vsl::scalar_t<X>;
-        auto x = std::vector<X>{};
-        x.reserve(range.size());
-        for (auto v : range) {
-            x.push_back(X{static_cast<S>(v)});
-        }
-        return x;
-    };
-    
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({0.0001f, 10000.f, 100000});
-    auto xs_vec = to_vec(xs);
+    auto xs = Range::make<Bench::S>({0.0001f, 10000.f, 100000});
+    auto xs_vec = Bench::to_vec(xs);
 
     auto t_std = audio_bench::Timer("std::sqrt process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -327,7 +425,7 @@ inline auto bench_sqrt() -> void
 inline auto bench_sinh() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-5.f, 5.f, 100000});
+    auto xs = Range::make<Bench::S>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Timer("std::sinh process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -356,7 +454,7 @@ inline auto bench_sinh() -> void
 inline auto bench_cosh() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-5.f, 5.f, 100000});
+    auto xs = Range::make<Bench::S>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Timer("std::cosh process 100000 floats", [&]() {
         for (auto x : xs) {
@@ -385,7 +483,7 @@ inline auto bench_cosh() -> void
 inline auto bench_tanh() -> void
 {
     using Range = audio_bench::signals::Range;
-    auto xs = Range::make<float>({-5.f, 5.f, 100000});
+    auto xs = Range::make<Bench::S>({-5.f, 5.f, 100000});
 
     auto t_std = audio_bench::Timer("std::tanh process 100000 floats", [&]() {
         for (auto x : xs) {
