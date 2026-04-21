@@ -61,7 +61,7 @@ def g(x):
 
 
 # Fit g on [-pi/2, pi/2] via Chebyshev interpolation in t = x/(pi/2).
-DEGREE = 14
+DEGREE = 8
 cheb = Chebyshev.interpolate(lambda t: g(PI_HALF * t), DEGREE, domain=[-1, 1])
 
 print("Chebyshev coefficients a_n of g((pi/2)*t) = sum a_n T_n(t):")

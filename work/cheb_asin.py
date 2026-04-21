@@ -45,7 +45,7 @@ def g(x):
 # Bernstein rho ~ 3.73 (branch points at +/- 1 land at t = +/- 2), so
 # DEGREE=12 gives ~23 bits -- right at the f32 edge. Adequate for f32 ULP
 # in the low single digits.
-DEGREE = 12
+DEGREE = 8
 cheb = Chebyshev.interpolate(lambda t: g(HALF * t), DEGREE, domain=[-1, 1])
 print("Chebyshev coefficients of asin((1/2)*t)/((1/2)*t):")
 for n, c in enumerate(cheb.coef):

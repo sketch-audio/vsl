@@ -231,4 +231,50 @@ print("    const float hi = (x + PI_HALF_MAJOR) + PI_HALF_MINOR;  // ~ x + pi/2"
 print("    return lo * hi * p;")
 print("}")
 
+
+# ---------------------------------------------------------------------------
+# Oscillator SINAD
+# ---------------------------------------------------------------------------
+_FFT_N = 131072
+_K = 997
+_phase_f64 = 2 * PI * ((np.arange(_FFT_N, dtype=np.float64) * _K / _FFT_N) % 1.0 - 0.5)
+_phase_f32 = _phase_f64.astype(np.float32)
+
+_y_cheb = approx_cos_f32_split(_phase_f32).astype(np.float64)
+_y_libm = np.cos(_phase_f64).astype(np.float32).astype(np.float64)
+
+
+def _sinad(y):
+    Y = np.fft.rfft(y)
+    pwr = np.abs(Y) ** 2
+    noise = pwr.copy(); noise[_K] = 0.0
+    return 10.0 * np.log10(pwr[_K] / max(noise.sum(), 1e-300)), Y, pwr
+
+
+_snr_cheb, _Y_cheb, _pwr_cheb = _sinad(_y_cheb)
+_snr_libm, _, _pwr_libm = _sinad(_y_libm)
+print(f"\nOscillator SINAD ({_FFT_N}-pt FFT, {_K} cycles):")
+print(f"  Chebyshev f32 : {_snr_cheb:.1f} dB")
+print(f"  libm f32      : {_snr_libm:.1f} dB")
+
+_db_cheb = 10.0 * np.log10(_pwr_cheb / _pwr_cheb[_K] + 1e-300)
+_db_libm = 10.0 * np.log10(_pwr_libm / _pwr_libm[_K] + 1e-300)
+_freq = np.arange(len(_Y_cheb)) / _FFT_N
+
+fig_snr, ax_snr = plt.subplots(figsize=(12, 5))
+ax_snr.plot(_freq[1:], _db_cheb[1:], lw=0.6, color="#1f77b4",
+            label=f"Chebyshev f32 (SINAD {_snr_cheb:.1f} dB)")
+ax_snr.plot(_freq[1:], _db_libm[1:], lw=0.6, color="#d62728", alpha=0.7,
+            label=f"libm f32 (SINAD {_snr_libm:.1f} dB)")
+ax_snr.set_xlabel("Normalized frequency")
+ax_snr.set_ylabel("dB (relative to fundamental)")
+ax_snr.set_title(f"cos(x) oscillator SINAD — {_FFT_N}-pt FFT, {_K} cycles")
+ax_snr.set_ylim(-180, 5)
+ax_snr.set_xlim(0, 0.5)
+ax_snr.legend()
+ax_snr.grid(alpha=0.3)
+fig_snr.tight_layout()
+fig_snr.savefig("work/out/cheb_cos_snr.png", dpi=130)
+print("Saved work/out/cheb_cos_snr.png")
+
 plt.show()

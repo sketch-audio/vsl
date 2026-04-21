@@ -46,7 +46,7 @@ def g(x):
     return out
 
 
-DEGREE = 12
+DEGREE = 8
 cheb = Chebyshev.interpolate(lambda t: g(TAN_PI_8 * t), DEGREE, domain=[-1, 1])
 print(f"Chebyshev coefficients of atan(K*t)/(K*t), K=tan(pi/8):")
 for n, c in enumerate(cheb.coef):
