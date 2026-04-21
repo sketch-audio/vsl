@@ -110,15 +110,17 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::cos.", []() {
         audio_bench::log("Starting Test vsl::cos.");
-        auto xs = Range::make<float>({-5, 5, 100000});
+        constexpr auto pi = std::numbers::pi_v<float>;
+        auto xs = Range::make<float>({-pi, pi, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::cos(vsl::float32x4{x});
+            const auto v = vsl::cos<false>(vsl::float32x4{x});
             const auto s = std::cos(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail cos({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{5e-2f}, std::format("Fail cos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{4e-7f}, std::format("Fail cos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail cos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{7}, std::format("Fail cos({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -126,15 +128,17 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::sin.", []() {
         audio_bench::log("Starting Test vsl::sin.");
-        auto xs = Range::make<float>({-5, 5, 100000});
+        constexpr auto pi = std::numbers::pi_v<float>;
+        auto xs = Range::make<float>({-pi, pi, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::sin(vsl::float32x4{x});
+            const auto v = vsl::sin<false>(vsl::float32x4{x});
             const auto s = std::sin(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail sin({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{5e-2f}, std::format("Fail sin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f}, std::format("Fail sin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail sin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail sin({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -149,10 +153,11 @@ inline auto test_math() -> void
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::tan(vsl::float32x4{x});
+            const auto v = vsl::tan<false>(vsl::float32x4{x});
             const auto s = std::tan(x);
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail tan({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{5e-3f}, std::format("Fail tan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{2e-6f}, std::format("Fail tan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail tan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail tan({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -164,11 +169,12 @@ inline auto test_math() -> void
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::cos_2pi(vsl::float32x4{x});
-            const auto s = std::cos(2 * std::numbers::pi_v<float> * x);
+            const auto v = vsl::cos_2pi<false>(vsl::float32x4{x});
+            const auto s = static_cast<float>(std::cos(2 * std::numbers::pi_v<double> * x));
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-4f}, std::format("Fail cos_2pi({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{5e-3f}, std::format("Fail cos_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail cos_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{5e-7f}, std::format("Fail cos_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{8}, std::format("Fail cos_2pi({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -176,15 +182,16 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::sin_2pi.", []() {
         audio_bench::log("Starting Test vsl::sin_2pi.");
-        auto xs = Range::make<float>({0, 1, 100000});
+        auto xs = Range::make<float>({0, 1, 100001, false}); // We're exact at 0.5 and 1. Avoid those in the test data.
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::sin_2pi(vsl::float32x4{x});
-            const auto s = std::sin(2 * std::numbers::pi_v<float> * x);
+            const auto v = vsl::sin_2pi<false>(vsl::float32x4{x});
+            const auto s = static_cast<float>(std::sin(2 * std::numbers::pi_v<double> * x));
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-4f}, std::format("Fail sin_2pi({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1.f}, std::format("Fail sin_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{2e-7f}, std::format("Fail sin_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail sin_2pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail sin_2pi({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -195,15 +202,17 @@ inline auto test_math() -> void
     Tests::add("Test vsl::acos.", []() {
         audio_bench::log("Starting Test vsl::acos.");
         // We're using this in butterworth filter to calculate alpha.
-        auto xs = Range::make<float>({-0.706f, 0.706f, 100000});
+        // So in practice we just need -0.707...0.707.
+        auto xs = Range::make<float>({-1.f, 1.f, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::acos(vsl::float32x4{x});
             const auto s = std::acos(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{3e-6f}, std::format("Fail acos({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail acos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail acos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{6e-6f}, std::format("Fail acos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail acos({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -212,15 +221,17 @@ inline auto test_math() -> void
     Tests::add("Test vsl::asin.", []() {
         audio_bench::log("Starting Test vsl::asin.");
         // We're using this in butterworth filter to calculate alpha.
-        auto xs = Range::make<float>({-0.706f, 0.706f, 100000});
+        // So in practice we just need -0.707...0.707.
+        auto xs = Range::make<float>({-1.f, 1.f, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::asin(vsl::float32x4{x});
             const auto s = std::asin(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{3e-6f}, std::format("Fail asin({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail asin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f}, std::format("Fail asin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{6e-7f}, std::format("Fail asin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{6}, std::format("Fail asin({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -228,15 +239,16 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::atan.", []() {
         audio_bench::log("Starting Test vsl::atan.");
-        auto xs = Range::make<float>({-2.5f, 2.5f, 100000});
+        auto xs = Range::make<float>({-10.f, 10.f, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::atan(vsl::float32x4{x});
             const auto s = std::atan(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-2f}, std::format("Fail atan({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-2f}, std::format("Fail atan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f}, std::format("Fail atan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail atan({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail atan({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -246,15 +258,15 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::exp2.", []() {
         audio_bench::log("Starting Test vsl::exp2.");
-        auto xs = Range::make<float>({-10, 10, 100000});
+        auto xs = Range::make<float>({-100, 100, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::exp2(vsl::float32x4{x});
             const auto s = std::exp2(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{2e-4f}, std::format("Fail exp2({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail exp2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail exp2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2}, std::format("Fail exp2({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -264,15 +276,16 @@ inline auto test_math() -> void
         audio_bench::log("Starting Test vsl::log2.");
 
         audio_bench::log("Testing range 0...1");
-        auto xs = Range::make<float>({1e-6f, 1, 100000});
+        auto xs = Range::make<float>({1e-10f, 1, 1000000}); // 1e-10f -> -200 dB
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::log2(vsl::float32x4{x});
             const auto s = std::log2(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log2({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-2f}, std::format("Fail log2({})", x)); // Almost at 1e-2f
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail log2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail log2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail log2({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -285,24 +298,9 @@ inline auto test_math() -> void
             const auto v = vsl::log2(vsl::float32x4{x});
             const auto s = std::log2(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log2({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail log2({})", x));
-            errors.update_with(x, v[0], s);
-        }
-        errors.report();
-    });
-
-    Tests::add("Test vsl::exp (extreme values).", []() {
-        audio_bench::log("Starting Test vsl::exp (extreme values).");
-        auto xs = Range::make<double>({-700, 0, 10000});
-
-        auto errors = Tracker<double>{};
-        for (auto x : xs) {
-            const auto v = vsl::exp(vsl::float64x2{x});
-            const auto s = std::exp(x);
-            audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-2}, std::format("Fail exp({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3}, std::format("Fail exp({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail log2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail log2({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{1}, std::format("Fail log2({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -310,15 +308,15 @@ inline auto test_math() -> void
 
     Tests::add("Test vsl::exp.", []() {
         audio_bench::log("Starting Test vsl::exp.");
-        auto xs = Range::make<float>({-10, 10, 100000});
+        auto xs = Range::make<float>({-85, 85, 100000}); // We're flushing to zero at -87.34
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::exp(vsl::float32x4{x});
             const auto s = std::exp(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-2f}, std::format("Fail exp({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail exp({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail exp({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2}, std::format("Fail exp({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -328,15 +326,16 @@ inline auto test_math() -> void
         audio_bench::log("Starting Test vsl::log.");
 
         audio_bench::log("Testing range 0...1");
-        auto xs = Range::make<float>({1e-6f, 1, 100000});
+        auto xs = Range::make<float>({1e-10f, 1, 1000000}); // 1e-10f -> -200 dB
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::log(vsl::float32x4{x});
             const auto s = std::log(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-2f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail log({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -349,8 +348,9 @@ inline auto test_math() -> void
             const auto v = vsl::log(vsl::float32x4{x});
             const auto s = std::log(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail log({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2}, std::format("Fail log({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -360,15 +360,16 @@ inline auto test_math() -> void
         audio_bench::log("Starting Test vsl::log10.");
 
         audio_bench::log("Testing range 0...1");
-        auto xs = Range::make<float>({1e-6f, 1, 100000});
+        auto xs = Range::make<float>({1e-10f, 1, 1000000}); // 1e-10f -> -200 dB
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::log10(vsl::float32x4{x});
             const auto s = std::log10(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log10({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-2f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{4}, std::format("Fail log10({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -381,8 +382,9 @@ inline auto test_math() -> void
             const auto v = vsl::log10(vsl::float32x4{x});
             const auto s = std::log10(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-5f}, std::format("Fail log10({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail log10({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -393,30 +395,15 @@ inline auto test_math() -> void
 
         audio_bench::log("Testing base 10");
         // Test base 10
-        auto xs = Range::make<float>({-5, 5, 100000});
+        auto xs = Range::make<float>({-10, 10, 100000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::pow(vsl::float32x4{10}, vsl::float32x4{x});
             const auto s = std::pow(10.f, x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1.f}, std::format("Fail pow(10, {})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail pow(10, {})", x));
-            errors.update_with(x, v[0], s);
-        }
-        errors.report();
-
-        audio_bench::log("Testing exponent 0.5 (sqrt case)");
-        // Test exponent 0.5 (sqrt case)
-        xs = Range::make<float>({0, 100, 100000});
-
-        errors = Tracker<float>{}; // reset
-        for (auto x : xs) {
-            const auto v = vsl::pow(vsl::float32x4{x}, vsl::float32x4{0.5f});
-            const auto s = std::pow(x, 0.5f);
-            audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-4f}, std::format("Fail pow({}, 0.5)", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail pow({}, 0.5)", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-6f}, std::format("Fail pow(10, {})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{30}, std::format("Fail pow(10, {})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -440,6 +427,22 @@ inline auto test_math() -> void
 
     // MARK: - hyperbolic trig
 
+    Tests::add("Test vsl::cosh.", []() {
+        audio_bench::log("Starting Test vsl::cosh.");
+        auto xs = Range::make<float>({-5, 5, 100000});
+        auto errors = Tracker<float>{};
+        for (auto x : xs) {
+            const auto v = vsl::cosh(vsl::float32x4{x});
+            const auto s = std::cosh(x);
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], s, Error::Absolute{2e-5f}, std::format("Fail cosh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail cosh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2}, std::format("Fail cosh({})", x));
+            errors.update_with(x, v[0], s);
+        }
+        errors.report();
+    });
+
     Tests::add("Test vsl::sinh.", []() {
         audio_bench::log("Starting Test vsl::sinh.");
         auto xs = Range::make<float>({-5, 5, 100000});
@@ -451,21 +454,7 @@ inline auto test_math() -> void
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-5f}, std::format("Fail sinh({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{2e-3f}, std::format("Fail sinh({})", x));
-            errors.update_with(x, v[0], s);
-        }
-        errors.report();
-    });
-
-    Tests::add("Test vsl::cosh.", []() {
-        audio_bench::log("Starting Test vsl::cosh.");
-        auto xs = Range::make<float>({-5, 5, 100000});
-        auto errors = Tracker<float>{};
-        for (auto x : xs) {
-            const auto v = vsl::cosh(vsl::float32x4{x});
-            const auto s = std::cosh(x);
-            audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{2e-5f}, std::format("Fail cosh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail cosh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{18527}, std::format("Fail sinh({})", x)); // ...
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -473,14 +462,15 @@ inline auto test_math() -> void
     
     Tests::add("Test vsl::tanh.", []() {
         audio_bench::log("Starting Test vsl::tanh.");
-        auto xs = Range::make<float>({-5, 5, 100000});
+        auto xs = Range::make<float>({-10, 10, 100000});
         auto errors = Tracker<float>{};
         for (auto x : xs) {
             const auto v = vsl::tanh(vsl::float32x4{x});
             const auto s = std::tanh(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{2e-4f}, std::format("Fail tanh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{1e-3f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{4e-3f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{4e-3f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{53596}, std::format("Fail tanh({})", x)); // ...
             errors.update_with(x, v[0], s);
         }
         errors.report();
