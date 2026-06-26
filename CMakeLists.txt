@@ -20,6 +20,7 @@ if(PROJECT_IS_TOP_LEVEL)
         audio_bench
         GIT_REPOSITORY https://github.com/sketch-audio/audio_bench.git
         GIT_TAG main
+        SYSTEM
     )
     FetchContent_MakeAvailable(audio_bench)
     add_subdirectory(bench)
