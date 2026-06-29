@@ -4,36 +4,38 @@
 #include "vsl_core.hpp"
 #include "vsl_logic.hpp" // select
 
-namespace vsl {
+namespace vsl::random {
 
-enum class Random_engine { lin_cong, xor_shift };
+enum class Engine : uint32_t { Lin_cong = 0, Xor_shift };
 
-template<typename X, Random_engine Engine = Random_engine::lin_cong>
-struct Random_gen {
+template<typename X, Engine Eng = Engine::Lin_cong>
+struct Generator {
 
     using S = scalar_t<X>;
+    using Ux = unsigned_t<X>;
+    using Us = unsigned_t<S>;
 
-    static constexpr auto default_seed = 808u;
+    explicit Generator(Ux seed = default_seed) : _seed{seed}, _min{0}, _max{1} {};
+    Generator(S min, S max, Ux seed = default_seed) : _seed{seed}, _min{min}, _max{max} {};
 
-    Random_gen(unsigned_t<X> seed = default_seed) : _seed{seed}, _min{0}, _max{1} {};
-    Random_gen(S min, S max, unsigned_t<X> seed = default_seed) : _seed{seed}, _min{min}, _max{max} {};
-
+    // Reset to seed where mask is true (default all lanes).
     auto reset(mask_t<X> mask = true_mask_v<S>) -> void
     {
         const auto cond = mask_to_bool(mask);
         _state = select(cond, _seed, _state);
     }
 
-    auto next() -> X
+    // Get next random value in range [_min, _max).
+    [[nodiscard]] auto next() -> X
     {
         constexpr auto shift = ieee_exp_bits_v<S>;
-        constexpr auto one = unsigned_t<S>{1};
+        constexpr auto one = Us{1};
         constexpr auto denom = one << (ieee_sig_bits_v<S> + 1);
         constexpr auto mask = denom - 1;
         
         // We're doing the thing where we shift down so x doesn't get "rounded" on conversion.
-        const auto x = unsigned_to_float((_next<Engine>() >> shift) & mask);
-        constexpr auto y = unsigned_to_float(denom);
+        const auto x = unsigned_to_float((_next<Eng>() >> shift) & mask);
+        constexpr auto y = unsigned_to_float(denom); // Scalar so it can be constexpr.
         const auto norm = x / y;
         
         return (_max - _min) * norm + _min;
@@ -41,18 +43,19 @@ struct Random_gen {
 
 private:
 
-    const unsigned_t<X> _seed{default_seed};
-    const S _min{};
-    const S _max{1};
+    static constexpr auto default_seed = Us{808};
 
-    unsigned_t<X> _state{_seed};
+    Ux _seed{default_seed};
+    Ux _state{_seed};
+    S _min{};
+    S _max{1};
 
-    template<Random_engine>
-    auto _next() -> unsigned_t<X> { static_assert(deferred_false_v<X>); }
+    template<Engine>
+    auto _next() -> Ux { static_assert(deferred_false_v<X>); }
     
     // See: https://audiodev.blog/random-numbers/
     template<>
-    auto _next<Random_engine::lin_cong>() -> unsigned_t<X>
+    auto _next<Engine::Lin_cong>() -> Ux
     {
         // 32-bit scalar type
         if constexpr (sizeof(S) == 4) {
@@ -71,7 +74,7 @@ private:
 
     // See: https://en.wikipedia.org/wiki/Xorshift
     template<>
-    auto _next<Random_engine::xor_shift>() -> unsigned_t<X>
+    auto _next<Engine::Xor_shift>() -> Ux
     {
         // 32-bit scalar type
         if constexpr (sizeof(S) == 4) {
@@ -96,5 +99,6 @@ private:
         }
     }
 };
+static_assert(std::semiregular<Generator<float>>);
 
-} // namespace vsl
+} // namespace vsl::random

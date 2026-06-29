@@ -5,15 +5,15 @@
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
-template<typename S, typename V, vsl::Random_engine Engine>
+template<typename S, typename V, vsl::random::Engine Engine>
 inline auto test_engine() -> void
 {
     using Tests = audio_bench::Tests;
 
     // Scalar vs vector equality for same seed
     Tests::add("random - scalar/vector equality", []() {
-        auto srng = vsl::Random_gen<S, Engine>{};
-        auto vrng = vsl::Random_gen<V, Engine>{};
+        auto srng = vsl::random::Generator<S, Engine>{};
+        auto vrng = vsl::random::Generator<V, Engine>{};
         srng.reset();
         vrng.reset();
 
@@ -35,8 +35,8 @@ inline auto test_engine() -> void
     Tests::add("random - min/max range", []() {
         const auto min = S{5};
         const auto max = S{10};
-        auto srng = vsl::Random_gen<S>{min, max};
-        auto vrng = vsl::Random_gen<V>{min, max};
+        auto srng = vsl::random::Generator<S>{min, max};
+        auto vrng = vsl::random::Generator<V>{min, max};
         srng.reset();
         vrng.reset();
 
@@ -63,7 +63,7 @@ inline auto test_engine() -> void
             }
         };
 
-        auto vrng = vsl::Random_gen<V>{make_seed()};
+        auto vrng = vsl::random::Generator<V>{make_seed()};
         vrng.reset();
 
         for (size_t i = 0; i < 1000; ++i) {
@@ -79,8 +79,9 @@ inline auto test_engine() -> void
 
 inline auto test_random() -> void
 {
-    test_engine<float, vsl::float32x4, vsl::Random_engine::lin_cong>();
-    test_engine<float, vsl::float32x4, vsl::Random_engine::xor_shift>();
-    test_engine<double, vsl::float64x2, vsl::Random_engine::lin_cong>();
-    test_engine<double, vsl::float64x2, vsl::Random_engine::xor_shift>();
+    using enum vsl::random::Engine;
+    test_engine<float, vsl::float32x4, Lin_cong>();
+    test_engine<float, vsl::float32x4, Xor_shift>();
+    test_engine<double, vsl::float64x2, Lin_cong>();
+    test_engine<double, vsl::float64x2, Xor_shift>();
 }
