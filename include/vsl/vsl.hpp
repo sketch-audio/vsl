@@ -7,4 +7,4 @@
 #include "source/vsl_impl.hpp" // Intrinsic implementation
 #include "source/vsl_logic.hpp"
 #include "source/vsl_math.hpp"
-#include "source/vsl_rand.hpp"
+#include "source/vsl_random.hpp"
