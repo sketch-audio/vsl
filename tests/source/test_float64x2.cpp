@@ -1,9 +1,9 @@
-#pragma once
-
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
-inline auto test_float64x2() -> void
+namespace {
+
+auto test_float64x2() -> void
 {
     using Tests = audio_bench::Tests;
 
@@ -100,3 +100,7 @@ inline auto test_float64x2() -> void
         audio_bench::expect_true(!vsl::all(a > 9), "not all lanes > 9");
     });
 }
+
+struct Register { Register() { test_float64x2(); } } register_{};
+
+} // namespace

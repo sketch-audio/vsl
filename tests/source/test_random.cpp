@@ -1,12 +1,12 @@
-#pragma once
-
 #include <format>
 
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
+namespace {
+
 template<typename S, typename V, vsl::random::Engine Engine>
-inline auto test_engine() -> void
+auto test_engine() -> void
 {
     using Tests = audio_bench::Tests;
 
@@ -77,7 +77,7 @@ inline auto test_engine() -> void
     });
 }
 
-inline auto test_random() -> void
+auto test_random() -> void
 {
     using enum vsl::random::Engine;
     test_engine<float, vsl::float32x4, Lin_cong>();
@@ -85,3 +85,7 @@ inline auto test_random() -> void
     test_engine<double, vsl::float64x2, Lin_cong>();
     test_engine<double, vsl::float64x2, Xor_shift>();
 }
+
+struct Register { Register() { test_random(); } } register_{};
+
+} // namespace

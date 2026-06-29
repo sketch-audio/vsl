@@ -23,6 +23,7 @@ if(PROJECT_IS_TOP_LEVEL)
         SYSTEM
     )
     FetchContent_MakeAvailable(audio_bench)
+    enable_testing()
     add_subdirectory(bench)
     add_subdirectory(tests)
 endif()

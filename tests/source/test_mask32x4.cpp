@@ -1,9 +1,9 @@
-#pragma once
-
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
-inline auto test_mask32x4() -> void
+namespace {
+
+auto test_mask32x4() -> void
 {
     using Tests = audio_bench::Tests;
 
@@ -120,3 +120,7 @@ inline auto test_mask32x4() -> void
         audio_bench::expect_true(((~a) | a)[0] == all_ones[0] && ((~a) | a)[2] == all_ones[2], "~a | a == all ones");
     });
 }
+
+struct Register { Register() { test_mask32x4(); } } register_{};
+
+} // namespace

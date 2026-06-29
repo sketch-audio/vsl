@@ -1,9 +1,9 @@
-#pragma once
-
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
-inline auto test_mask64x2() -> void
+namespace {
+
+auto test_mask64x2() -> void
 {
     using Tests = audio_bench::Tests;
 
@@ -110,3 +110,7 @@ inline auto test_mask64x2() -> void
         audio_bench::expect_true(((~a) | a)[0] == all_ones[0] && ((~a) | a)[1] == all_ones[1], "~a | a == all ones");
     });
 }
+
+struct Register { Register() { test_mask64x2(); } } register_{};
+
+} // namespace

@@ -1,15 +1,15 @@
-#pragma once
-
 #include <cmath>
 #include <format>
 
 #include <vsl/vsl.hpp>
 #include <audio_bench/audio_bench.hpp>
 
+namespace {
+
 template<typename T>
 using Tracker = audio_bench::Error_tracker<T>; // Dumb can't do this in function scope.
 
-inline auto test_math() -> void
+auto test_math() -> void
 {
     // MARK: - basic
     using Tests = audio_bench::Tests;
@@ -476,3 +476,7 @@ inline auto test_math() -> void
         errors.report();
     });
 }
+
+struct Register { Register() { test_math(); } } register_{};
+
+} // namespace
