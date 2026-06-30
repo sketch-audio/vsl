@@ -49,7 +49,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 
 ## Conversions
 
-`vsl_conv.hpp` provides branchless conversion functions that work on both scalar and vector types:
+`vsl_convert.hpp` provides branchless conversion functions that work on both scalar and vector types:
 
 - `reinterpret_as_float(x)` / `reinterpret_as_int(x)` — bit-cast between float and integer
 - `unsigned_to_float(x)` / `signed_to_float(x)` — integer-to-float cast (static_cast semantics)
@@ -99,7 +99,7 @@ Approximation coefficients were derived by Claude (Anthropic) using Python scrip
 
 ## Random number generation
 
-`vsl_rand.hpp` provides `Random_gen<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
+`vsl_random.hpp` provides `Random_gen<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
 
 Two engines are available via the `Random_engine` enum:
 
