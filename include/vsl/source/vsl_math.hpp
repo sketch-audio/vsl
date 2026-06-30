@@ -546,7 +546,7 @@ template<Floating_point X, Floating_point C>
 force_inline constexpr auto clamp(X x, C a, C b) -> X
 {
     if constexpr (is_vector_v<X>) {
-        min(max(x, a), b);
+        return min(max(x, a), b);
     }
     else {
         return std::clamp(x, X(a), X(b));
