@@ -393,20 +393,33 @@ auto test_math() -> void
     Tests::add("Test vsl::pow.", []() {
         audio_bench::log("Starting Test vsl::pow.");
 
-        audio_bench::log("Testing base 10");
-        // Test base 10
-        auto xs = Range::make<float>({-10, 10, 100000});
+        auto run = [](const char* label, float base_lo, float base_hi, float exp_lo, float exp_hi, float rel, size_t ulp, size_t n) {
+            audio_bench::log(label);
+            auto bases = Range::make<float>({base_lo, base_hi, n});
+            auto exps = Range::make<float>({exp_lo, exp_hi, n});
+            auto errors = Tracker<float>{};
+            for (auto i = size_t{}; i < n; ++i) {
+                const auto b = bases[i];
+                const auto e = exps[i];
+                const auto v = vsl::pow(vsl::float32x4{b}, vsl::float32x4{e});
+                const auto s = std::pow(b, e);
+                audio_bench::expect_true(vsl::all_same(v));
+                audio_bench::expect_close(v[0], s, Error::Relative{rel}, std::format("Fail pow({}, {})", b, e));
+                audio_bench::expect_close(v[0], s, Error::Ulp_distance{ulp}, std::format("Fail pow({}, {})", b, e));
+                errors.update_with(e, v[0], s);
+            }
+            errors.report();
+        };
 
-        auto errors = Tracker<float>{};
-        for (auto x : xs) {
-            const auto v = vsl::pow(vsl::float32x4{10}, vsl::float32x4{x});
-            const auto s = std::pow(10.f, x);
-            audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-6f}, std::format("Fail pow(10, {})", x));
-            audio_bench::expect_close(v[0], s, Error::Ulp_distance{30}, std::format("Fail pow(10, {})", x));
-            errors.update_with(x, v[0], s);
-        }
-        errors.report();
+        constexpr auto e = std::numbers::e_v<float>;
+        // base 10, -200..+200 dB (db to lin is 10^(x/20))
+        run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f, 9, 100000);
+        run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f, 2, 100000);
+        run("base e, exp -20..20", e, e, -20, 20, 1e-6f, 9, 100000);
+        run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f, 10, 100000);
+        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f, 12, 100000);
+        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f, 24, 100000);
+        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f, 24, 100000);
     });
 
     Tests::add("Test vsl::sqrt.", []() {
@@ -506,12 +519,14 @@ static_assert(abs_equal(vsl::sqrt(1e-6f), 1e-3f));
 static_assert(abs_equal(vsl::rsqrt(4.f), 0.5f));
 
 // Exact-by-construction log/exp identities.
-static_assert(vsl::log2(8.f) == 3.f);     // pure exponent extraction
-static_assert(vsl::exp2(3.f) == 8.f);     // pure exponent insertion
+static_assert(vsl::log2(8.f) == 3.f);
+static_assert(vsl::exp2(3.f) == 8.f);
 static_assert(abs_equal(vsl::log(1.f), 0.f));
 static_assert(abs_equal(vsl::exp(0.f), 1.f));
 static_assert(abs_equal(vsl::log10(1000.f), 3.f, 1e-5f));
-static_assert(abs_equal(vsl::pow(2.f, 10.f), 1024.f, 1e-2f));
+static_assert(vsl::pow(2.f, 10.f) == 1024.f);
+static_assert(vsl::rel_equal(vsl::pow(10.f, 3.f), 1000.f, 1e-6f));
+static_assert(vsl::rel_equal(vsl::pow(2.f, 0.5f), std::numbers::sqrt2_v<float>, 1e-6f));
 
 // Trig / hyperbolic (same polynomial as the runtime scalar path). The minimax
 // polynomials carry ~1e-7..1e-6 of error, so use a tolerance in line with the

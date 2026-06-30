@@ -453,18 +453,20 @@ force_inline constexpr auto atan(X x) -> X
 
 // MARK: - exp2, log2
 
-///
+namespace detail {
+
+// Folds through a small correction term. We need this for pow.
 template<Floating_point X>
-force_inline constexpr auto exp2(X x) -> X
+force_inline constexpr auto exp2(X x, X corr) -> X
 {
     using S = scalar_t<X>;
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
-    const auto int_part = float_to_signed(floor(x));
-    const auto dec_part = x - signed_to_float(int_part);
-    const auto val = (signed_to_unsigned(int_part) + exp_bias) << sig_bits;
-    const auto int_pow = reinterpret_as_float(val);
+    const auto int_part = vsl::float_to_signed(vsl::floor(x));
+    const auto dec_part = (x - vsl::signed_to_float(int_part)) + corr;
+    const auto val = (vsl::signed_to_unsigned(int_part) + exp_bias) << sig_bits;
+    const auto int_pow = vsl::reinterpret_as_float(val);
 
     // See work/cheb_exp2.py
     auto v = X(2.186578495e-04f);
@@ -474,7 +476,16 @@ force_inline constexpr auto exp2(X x) -> X
     v = v * dec_part + S(2.402304560e-01f);
     v = v * dec_part + S(6.931469440e-01f);
     v = v * dec_part + S(1.000000000e+00f);
-    return select(x < S(-126.f), X{}, int_pow * v);
+    return vsl::select(x < S(-126.f), X{}, int_pow * v);
+}
+
+} // namespace detail
+
+///
+template<Floating_point X>
+force_inline constexpr auto exp2(X x) -> X
+{
+    return detail::exp2(x, X{});
 }
 
 ///
@@ -576,7 +587,20 @@ template<Floating_point X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
     //assert(all(x >= 0) && "vsl::pow requires x >= 0!");
-    return select(x == 0, X{}, exp2(log2(x) * y)); // Revisit this.
+    if constexpr (is_vector_v<X>) {
+        // FMA plus new split impl gets us down to ~5 ULP.
+        const auto l = log2(x);
+        const auto hi = y * l;
+        const auto lo = fma(y, l, -hi);
+        return select(x == 0, X{}, detail::exp2(hi, lo));
+    }
+    else {
+        // Widen to double, then round back to float. This gets us down to ~1 ULP.
+        using W = double;
+        if (x == X{0}) { return X{0}; }
+        const auto l = log2(static_cast<W>(x));
+        return static_cast<X>(exp2(l * static_cast<W>(y)));
+    }
 }
 
 // MARK: - Hyperbolic Trig Functions
