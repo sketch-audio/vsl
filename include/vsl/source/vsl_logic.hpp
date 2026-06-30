@@ -59,6 +59,8 @@ force_inline constexpr auto all_same(X a) -> bool
     }
 }
 
+static_assert(all_same(1.f));
+
 template<typename X>
 force_inline constexpr auto all_unique(X a) -> bool
 {
@@ -77,6 +79,8 @@ force_inline constexpr auto all_unique(X a) -> bool
     }
 }
 
+static_assert(all_unique(1.f));
+
 template<typename X>
 force_inline constexpr auto all_finite(X a) -> bool
 {
@@ -87,10 +91,7 @@ force_inline constexpr auto all_finite(X a) -> bool
     }
 }
 
-// static_assert(all_finite(0.f));
-// static_assert(all_finite(1.f));
-// static_assert(!all_finite(std::numeric_limits<float>::infinity()));
-// static_assert(!all_finite(std::numeric_limits<float>::quiet_NaN()));
+static_assert(all_finite(0.f));
 
 // MARK: - Equality
 
