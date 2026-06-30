@@ -264,11 +264,11 @@ force_inline constexpr auto cos(X x) -> X
     constexpr auto pi_half_minor = S(-4.371138829e-08f);
     const auto x2 = x * x;
     auto p = X(1.772737512e-09f);
-    p = p * x2 + S(-2.677252269e-07f);
-    p = p * x2 + S(2.412236245e-05f);
-    p = p * x2 + S(-1.329319435e-03f);
-    p = p * x2 + S(3.838663921e-02f);
-    p = p * x2 + S(-4.052847326e-01f);
+    p = fma(p, x2, X(-2.677252269e-07f));
+    p = fma(p, x2, X(2.412236245e-05f));
+    p = fma(p, x2, X(-1.329319435e-03f));
+    p = fma(p, x2, X(3.838663921e-02f));
+    p = fma(p, x2, X(-4.052847326e-01f));
     const auto lo = (x - pi_half_major) - pi_half_minor;  // ~ x - pi/2 (Sterbenz)
     const auto hi = (x + pi_half_major) + pi_half_minor;  // ~ x + pi/2
     return lo * hi * p;
@@ -293,11 +293,11 @@ force_inline constexpr auto sin(X x) -> X
     constexpr auto pi_minor = S(-8.742277657e-08f);
     const auto x2 = x * x;
     auto p = X(1.345148160e-10f);
-    p = p * x2 + S(-2.335733917e-08f);
-    p = p * x2 + S(2.522634304e-06f);
-    p = p * x2 + S(-1.735062688e-04f);
-    p = p * x2 + S(6.620881148e-03f);
-    p = p * x2 + S(-1.013211831e-01f);
+    p = fma(p, x2, X(-2.335733917e-08f));
+    p = fma(p, x2, X(2.522634304e-06f));
+    p = fma(p, x2, X(-1.735062688e-04f));
+    p = fma(p, x2, X(6.620881148e-03f));
+    p = fma(p, x2, X(-1.013211831e-01f));
     const auto lo = (x - pi_major) - pi_minor;  // ~ x - pi (Sterbenz)
     const auto hi = (x + pi_major) + pi_minor;  // ~ x + pi
     return lo * hi * x * p;
@@ -322,10 +322,10 @@ force_inline constexpr auto tan(X x) -> X
     constexpr auto pi_half_minor = S(-4.371138829e-08f);
     const auto x2 = x * x;
     auto q = X(-9.648306332e-06f);
-    q = q * x2 + S(-1.677224500e-04f);
-    q = q * x2 + S(-4.349521827e-03f);
-    q = q * x2 + S(-1.775324047e-01f);
-    q = q * x2 + S(2.467401028e+00f);
+    q = fma(q, x2, X(-1.677224500e-04f));
+    q = fma(q, x2, X(-4.349521827e-03f));
+    q = fma(q, x2, X(-1.775324047e-01f));
+    q = fma(q, x2, X(2.467401028e+00f));
     const auto lo = (pi_half_major - x) + pi_half_minor;  // ~ pi/2 - x (Sterbenz)
     const auto hi = (pi_half_major + x) + pi_half_minor;  // ~ pi/2 + x
     return x * q / (lo * hi);
@@ -335,8 +335,6 @@ force_inline constexpr auto tan(X x) -> X
 template<bool needs_wrap, Floating_point X>
 force_inline constexpr auto cos_2pi(X x) -> X
 {
-    using S = scalar_t<X>;
-
     if constexpr (needs_wrap) {
         x = wrap(x);
     }
@@ -349,12 +347,12 @@ force_inline constexpr auto cos_2pi(X x) -> X
     // See work/cheb_cos2pi.py
     const auto x2 = x * x;
     auto q = X(-1.483706594e+00f);
-    q = q * x2 + S(7.732257843e+00f);
-    q = q * x2 + S(-2.592922974e+01f);
-    q = q * x2 + S(5.862275696e+01f);
-    q = q * x2 + S(-8.179283142e+01f);
-    q = q * x2 + S(5.982733917e+01f);
-    q = q * x2 + S(-1.600000000e+01f);
+    q = fma(q, x2, X(7.732257843e+00f));
+    q = fma(q, x2, X(-2.592922974e+01f));
+    q = fma(q, x2, X(5.862275696e+01f));
+    q = fma(q, x2, X(-8.179283142e+01f));
+    q = fma(q, x2, X(5.982733917e+01f));
+    q = fma(q, x2, X(-1.600000000e+01f));
     const auto lo = x - 0.25f;
     const auto hi = x + 0.25f;
     return (lo * hi) * q;
@@ -364,8 +362,6 @@ force_inline constexpr auto cos_2pi(X x) -> X
 template<bool needs_wrap, Floating_point X>
 force_inline constexpr auto sin_2pi(X x) -> X
 {
-    using S = scalar_t<X>;
-
     if constexpr (needs_wrap) {
         x = wrap(x);
     }
@@ -377,12 +373,12 @@ force_inline constexpr auto sin_2pi(X x) -> X
     const auto u = x - 0.5f;
     const auto v = u * u;
     auto p = X(-6.151015759e-01f);
-    p = p * v + S(3.622930765e+00f);
-    p = p * v + S(-1.417941380e+01f);
-    p = p * v + S(3.851269913e+01f);
-    p = p * v + S(-6.707761383e+01f);
-    p = p * v + S(6.483584595e+01f);
-    p = p * v + S(-2.513274193e+01f);
+    p = fma(p, v, X(3.622930765e+00f));
+    p = fma(p, v, X(-1.417941380e+01f));
+    p = fma(p, v, X(3.851269913e+01f));
+    p = fma(p, v, X(-6.707761383e+01f));
+    p = fma(p, v, X(6.483584595e+01f));
+    p = fma(p, v, X(-2.513274193e+01f));
     return -u * x * (x - 1.f) * p;
 }
 
@@ -406,10 +402,10 @@ force_inline constexpr auto acos(X x) -> X
     const auto r = select(big, inner, ax);  // always non-negative
     const auto r2 = r * r;
     auto p = X(4.784576222e-02f);
-    p = p * r2 + S(4.104170576e-02f);
-    p = p * r2 + S(7.526044548e-02f);
-    p = p * r2 + S(1.666617095e-01f);
-    p = p * r2 + S(1.000000000e+00f);
+    p = fma(p, r2, X(4.104170576e-02f));
+    p = fma(p, r2, X(7.526044548e-02f));
+    p = fma(p, r2, X(1.666617095e-01f));
+    p = fma(p, r2, X(1.000000000e+00f));
     const auto asin_val = r * p;
     // big: acos(|x|) = 2 * asin(inner)  [no cancellation near x=1]
     // small: acos(x) = pi/2 - asin(x)   [no cancellation: acos ~ pi/2]
@@ -434,10 +430,10 @@ force_inline constexpr auto asin(X x) -> X
     const auto r = select(big, inner, x);
     const auto r2 = r * r;
     auto p = X(4.784576222e-02f);
-    p = p * r2 + S(4.104170576e-02f);
-    p = p * r2 + S(7.526044548e-02f);
-    p = p * r2 + S(1.666617095e-01f);
-    p = p * r2 + S(1.000000000e+00f);
+    p = fma(p, r2, X(4.104170576e-02f));
+    p = fma(p, r2, X(7.526044548e-02f));
+    p = fma(p, r2, X(1.666617095e-01f));
+    p = fma(p, r2, X(1.000000000e+00f));
     const auto core = r * p;
     const auto sign = select(x < 0.f, X(-1.f), X(1.f));
     const auto tail = sign * ((pi_half_major - 2.f * core) + pi_half_minor);
@@ -463,10 +459,10 @@ force_inline constexpr auto atan(X x) -> X
     const auto r = select(big, (ax - 1) / (ax + 1), ax);
     const auto r2 = r * r;
     auto p = X(8.243747801e-02f);
-    p = p * r2 + S(-1.394065171e-01f);
-    p = p * r2 + S(1.998402327e-01f);
-    p = p * r2 + S(-3.333312869e-01f);
-    p = p * r2 + S(1.000000000e+00f);
+    p = fma(p, r2, X(-1.394065171e-01f));
+    p = fma(p, r2, X(1.998402327e-01f));
+    p = fma(p, r2, X(-3.333312869e-01f));
+    p = fma(p, r2, X(1.000000000e+00f));
     auto val = r * p;
     val = select(big, (pi_quarter_major + val) + pi_quarter_minor, val);
     val = select(inv, (pi_half_major - val) + pi_half_minor, val);
@@ -493,12 +489,12 @@ force_inline constexpr auto exp2(X x, X corr) -> X
 
     // See work/cheb_exp2.py
     auto v = X(2.186578495e-04f);
-    v = v * dec_part + S(1.239133184e-03f);
-    v = v * dec_part + S(9.684186429e-03f);
-    v = v * dec_part + S(5.548062921e-02f);
-    v = v * dec_part + S(2.402304560e-01f);
-    v = v * dec_part + S(6.931469440e-01f);
-    v = v * dec_part + S(1.000000000e+00f);
+    v = fma(v, dec_part, X(1.239133184e-03f));
+    v = fma(v, dec_part, X(9.684186429e-03f));
+    v = fma(v, dec_part, X(5.548062921e-02f));
+    v = fma(v, dec_part, X(2.402304560e-01f));
+    v = fma(v, dec_part, X(6.931469440e-01f));
+    v = fma(v, dec_part, X(1.000000000e+00f));
     return vsl::select(x < S(-126.f), X{}, int_pow * v);
 }
 
@@ -536,14 +532,14 @@ force_inline constexpr auto log2(X x) -> X
 
     const auto u = m_adj - S(1.f);
     auto p = X(7.639224082e-02f);
-    p = p * u + S(-1.725005209e-01f);
-    p = p * u + S(2.160132378e-01f);
-    p = p * u + S(-2.428877503e-01f);
-    p = p * u + S(2.882365286e-01f);
-    p = p * u + S(-3.605715632e-01f);
-    p = p * u + S(4.809007943e-01f);
-    p = p * u + S(-7.213485241e-01f);
-    p = p * u + S(1.442695022e+00f);
+    p = fma(p, u, X(-1.725005209e-01f));
+    p = fma(p, u, X(2.160132378e-01f));
+    p = fma(p, u, X(-2.428877503e-01f));
+    p = fma(p, u, X(2.882365286e-01f));
+    p = fma(p, u, X(-3.605715632e-01f));
+    p = fma(p, u, X(4.809007943e-01f));
+    p = fma(p, u, X(-7.213485241e-01f));
+    p = fma(p, u, X(1.442695022e+00f));
     return e_adj + u * p;
 }
 
@@ -572,12 +568,12 @@ force_inline constexpr auto exp(X x) -> X
     constexpr auto log2e = S(std::numbers::log2e_v<double>);
     const auto t = r * log2e;
     auto v = X(2.186578495e-04f);
-    v = v * t + S(1.239133184e-03f);
-    v = v * t + S(9.684186429e-03f);
-    v = v * t + S(5.548062921e-02f);
-    v = v * t + S(2.402304560e-01f);
-    v = v * t + S(6.931469440e-01f);
-    v = v * t + S(1.000000000e+00f);
+    v = fma(v, t, X(1.239133184e-03f));
+    v = fma(v, t, X(9.684186429e-03f));
+    v = fma(v, t, X(5.548062921e-02f));
+    v = fma(v, t, X(2.402304560e-01f));
+    v = fma(v, t, X(6.931469440e-01f));
+    v = fma(v, t, X(1.000000000e+00f));
 
     return select(x < S(-87.34f), X{}, two_pow * v);
 }
@@ -654,14 +650,12 @@ force_inline constexpr auto sinh(X x) -> X
 template<Floating_point X>
 force_inline constexpr auto tanh(X x) -> X
 {
-    using S = scalar_t<X>;
-
     const auto u = x * x;
     auto r = X(3.292487918e-06f);
-    r = r * u + S(1.962047536e-04f);
-    r = r * u + S(8.333356120e-03f);
-    r = r * u + S(1.666701734e-01f);
-    r = r * u + S(9.999960065e-01f);
+    r = fma(r, u, X(1.962047536e-04f));
+    r = fma(r, u, X(8.333356120e-03f));
+    r = fma(r, u, X(1.666701734e-01f));
+    r = fma(r, u, X(9.999960065e-01f));
     const auto p = x * r;
     return p * rsqrt(p * p + 1);
 }

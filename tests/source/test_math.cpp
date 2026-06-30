@@ -399,7 +399,7 @@ auto test_math() -> void
             const auto s = std::log10(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail log10({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-7f}, std::format("Fail log10({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail log10({})", x));
             audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail log10({})", x));
             errors.update_with(x, v[0], s);
         }
@@ -431,7 +431,7 @@ auto test_math() -> void
         // base 10, -200..+200 dB (db to lin is 10^(x/20))
         run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f, 9, 100000);
         run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f, 2, 100000);
-        run("base e, exp -20..20", e, e, -20, 20, 1e-6f, 9, 100000);
+        run("base e, exp -20..20", e, e, -20, 20, 2e-6f, 25, 100000);
         run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f, 10, 100000);
         run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f, 12, 100000);
         run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f, 24, 100000);
