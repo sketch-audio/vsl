@@ -155,6 +155,20 @@ force_inline constexpr auto round(X x) -> X
     }
 }
 
+
+///
+template<Floating_point X>
+force_inline constexpr auto fma(X a, X b, X c) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return X::fma(a, b, c);
+    }
+    else {
+        if (std::is_constant_evaluated()) { return a * b + c; }
+        return std::fma(a, b, c);
+    }
+}
+
 // MARK: - sqrt
 
 ///

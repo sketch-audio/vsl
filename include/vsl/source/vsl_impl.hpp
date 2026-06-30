@@ -13,6 +13,11 @@
 #error "No SIMD support detected."
 #endif
 
+// We need FMA.
+#if defined(VSL_SSE4) && !defined(__FMA__) && !defined(_MSC_VER)
+#error "No FMA support detected."
+#endif
+
 #if defined(_MSC_VER)
 #define force_inline inline __forceinline
 #define vector_call __vectorcall
@@ -400,6 +405,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
+    {
+#if VSL_NEON
+        return vfmaq_f64(c, a, b);
+#elif VSL_SSE4
+        return _mm_fmadd_pd(a, b, c);
+#endif
+    }
+
     static force_inline auto vector_call div(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
@@ -648,6 +662,7 @@ public:
     static force_inline auto vector_call rsqrt(float64x2 x) noexcept -> float64x2 { return rsqrt(x.data); }
     static force_inline auto vector_call min(float64x2 a, float64x2 b) noexcept -> float64x2 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float64x2 a, float64x2 b) noexcept -> float64x2 { return max(a.data, b.data); }
+    static force_inline auto vector_call fma(float64x2 a, float64x2 b, float64x2 c) noexcept -> float64x2 { return fma(a.data, b.data, c.data); }
 
 };
 
@@ -1018,6 +1033,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
+    {
+#if VSL_NEON
+        return vfmaq_f32(c, a, b);
+#elif VSL_SSE4
+        return _mm_fmadd_ps(a, b, c);
+#endif
+    }
+
     static force_inline auto vector_call div(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
@@ -1258,6 +1282,7 @@ public:
     static force_inline auto vector_call rsqrt(float32x4 x) noexcept -> float32x4 { return rsqrt(x.data); }
     static force_inline auto vector_call min(float32x4 a, float32x4 b) noexcept -> float32x4 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float32x4 a, float32x4 b) noexcept -> float32x4 { return max(a.data, b.data); }
+    static force_inline auto vector_call fma(float32x4 a, float32x4 b, float32x4 c) noexcept -> float32x4 { return fma(a.data, b.data, c.data); }
 
 };
 
