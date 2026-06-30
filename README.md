@@ -85,6 +85,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 | `wrap(x, k)` | Symmetric wrap to [-k, k] |
 | `wrap(x, a, b)` | Arbitrary range wrap |
 | `min`, `max`, `clamp` | |
+| `fma(a, b, c)` | Fused multiply-add (`a*b + c`, single rounding) |
 | `sign` | |
 | `cos<needs_wrap>(x)`, `sin<needs_wrap>(x)`, `tan<needs_wrap>(x)` | Template parameter suppresses range reduction when input is already reduced |
 | `cos_2pi<needs_wrap>(x)`, `sin_2pi<needs_wrap>(x)` | Input in cycles [0, 1] |
@@ -99,15 +100,15 @@ Approximation coefficients were derived by Claude (Anthropic) using Python scrip
 
 ## Random number generation
 
-`vsl_random.hpp` provides `Random_gen<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
+`vsl_random.hpp` provides `Generator<X, Engine>`, a seedable PRNG that works on all four float types (scalar and vector), producing uniform floats in a configurable range.
 
-Two engines are available via the `Random_engine` enum:
+Two engines are available via the `Engine` enum:
 
-- `Random_engine::lin_cong` (default) — linear congruential generator
-- `Random_engine::xor_shift` — xorshift generator
+- `Engine::Lin_cong` (default) — linear congruential generator
+- `Engine::Xor_shift` — xorshift generator
 
 ```cpp
-using Rng = vsl::Random_gen<vsl::float32x4>;
+using Rng = vsl::Generator<vsl::float32x4>;
 auto rng = Rng{-1.f, 1.f};
 const auto noise = rng.next();
 rng.reset();  // restore to seed state, optionally masked per-lane
