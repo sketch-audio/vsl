@@ -171,10 +171,11 @@ force_inline constexpr auto fma(X a, X b, X c) -> X
 
 // MARK: - sqrt
 
-///
+/// pre: x >= 0
 template<Floating_point X>
 force_inline constexpr auto sqrt(X x) -> X
 {
+    assert(all(x >= X{0}) && "vsl::sqrt: x >= 0");
     if constexpr (is_vector_v<X>) {
         return X::sqrt(x);
     }
@@ -184,10 +185,11 @@ force_inline constexpr auto sqrt(X x) -> X
     }
 }
 
-///
+/// pre: x > 0
 template<Floating_point X>
 force_inline constexpr auto rsqrt(X x) -> X
 {
+    assert(all(x > X{0}) && "vsl::rsqrt: x > 0");
     if constexpr (is_vector_v<X>) {
         return X::rsqrt(x);
     }
@@ -199,10 +201,11 @@ force_inline constexpr auto rsqrt(X x) -> X
 
 // MARK: - fmod, wrap
 
-///
+/// pre: y != 0
 template<Floating_point X>
 force_inline constexpr auto fmod(X x, X y) -> X
 {
+    assert(all(y != X{0}) && "vsl::fmod: y != 0");
     if constexpr (is_vector_v<X>) {
         return x - trunc(x / y) * y;
     }
@@ -219,20 +222,22 @@ force_inline constexpr auto wrap(X x) -> X
     return x - floor(x);
 }
 
-/// Symmetric wrap to [-k, k]
+/// Symmetric wrap to [-k, k]. pre: k != 0
 template<Floating_point X, Floating_point S>
 force_inline constexpr auto wrap(X x, S k) -> X
 {
+    assert(all(k != S{0}) && "vsl::wrap: k != 0");
     x += k;
     const auto two_k = 2 * k;
     const auto m = x - two_k * trunc(x / two_k);
     return select(x >= 0, m, m + two_k) - k;
 }
 
-/// Arbitrary wrap to [a, b]
+/// Arbitrary wrap to [a, b]. pre: a != b
 template<Floating_point X, Floating_point S>
 force_inline constexpr auto wrap(X x, S a, S b) -> X
 {
+    assert(all(a != b) && "vsl::wrap: a != b");
     const auto rect = x - a;
     const auto range = b - a;
     return range * wrap(rect / range) + a;
@@ -246,9 +251,12 @@ force_inline constexpr auto cos(X x) -> X
 {
     using S = scalar_t<X>;
 
+    [[maybe_unused]] constexpr auto pi = std::numbers::pi_v<S>;
     if constexpr (needs_wrap) {
-        constexpr auto pi = std::numbers::pi_v<S>;
         x = wrap(x, pi);
+    }
+    else {
+        assert(all(x >= X{-pi}) && all(x <= X{pi}) && "vsl::cos: x in [-pi, pi] without wrap");
     }
 
     // See work/cheb_cos.py
@@ -272,9 +280,12 @@ force_inline constexpr auto sin(X x) -> X
 {
     using S = scalar_t<X>;
 
+    [[maybe_unused]] constexpr auto pi = std::numbers::pi_v<S>;
     if constexpr (needs_wrap) {
-        constexpr auto pi = std::numbers::pi_v<S>;
         x = wrap(x, pi);
+    }
+    else {
+        assert(all(x >= X{-pi}) && all(x <= X{pi}) && "vsl::sin: x in [-pi, pi] without wrap");
     }
 
     // See work/cheb_sin.py
@@ -298,9 +309,12 @@ force_inline constexpr auto tan(X x) -> X
 {
     using S = scalar_t<X>;
 
+    [[maybe_unused]] constexpr auto half_pi = std::numbers::pi_v<S> / 2;
     if constexpr (needs_wrap) {
-        constexpr auto half_pi = std::numbers::pi_v<S> / 2;
         x = wrap(x, half_pi);
+    }
+    else {
+        assert(all(x >= X{-half_pi}) && all(x <= X{half_pi}) && "vsl::tan: x in [-pi/2, pi/2] without wrap");
     }
 
     // See work/cheb_tan.py
@@ -325,6 +339,9 @@ force_inline constexpr auto cos_2pi(X x) -> X
 
     if constexpr (needs_wrap) {
         x = wrap(x);
+    }
+    else {
+        assert(all(x >= X{0}) && all(x <= X{1}) && "vsl::cos_2pi: x in [0, 1] without wrap");
     }
 
     x = select(x < 0.5f, x, 1 - x); // Approximation on -0.5...0.5 makes us exact at 0.
@@ -352,6 +369,9 @@ force_inline constexpr auto sin_2pi(X x) -> X
     if constexpr (needs_wrap) {
         x = wrap(x);
     }
+    else {
+        assert(all(x >= X{0}) && all(x <= X{1}) && "vsl::sin_2pi: x in [0, 1] without wrap");
+    }
 
     // Approximation on 0...1, see work/cheb_sin2pi.py
     const auto u = x - 0.5f;
@@ -368,10 +388,11 @@ force_inline constexpr auto sin_2pi(X x) -> X
 
 // MARK: - Inverse Trig Functions
 
-///
+/// pre: x in [-1, 1]
 template<Floating_point X>
 force_inline constexpr auto acos(X x) -> X
 {
+    assert(all(x >= X{-1}) && all(x <= X{1}) && "vsl::acos: x in [-1, 1]");
     using S = scalar_t<X>;
 
     // See work/cheb_acos.py
@@ -397,10 +418,11 @@ force_inline constexpr auto acos(X x) -> X
     return select(x < 0.f, (pi_major - pos) + pi_minor, pos);
 }
 
-///
+/// pre: x in [-1, 1]
 template<Floating_point X>
 force_inline constexpr auto asin(X x) -> X
 {
+    assert(all(x >= X{-1}) && all(x <= X{1}) && "vsl::asin: x in [-1, 1]");
     using S = scalar_t<X>;
 
     // See work/cheb_asin.py
@@ -488,10 +510,11 @@ force_inline constexpr auto exp2(X x) -> X
     return detail::exp2(x, X{});
 }
 
-///
+/// pre: x > 0
 template<Floating_point X>
 force_inline constexpr auto log2(X x) -> X
 {
+    assert(all(x > X{0}) && "vsl::log2: x > 0");
     using S = scalar_t<X>;
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
@@ -558,7 +581,7 @@ force_inline constexpr auto exp(X x) -> X
     return select(x < S(-87.34f), X{}, two_pow * v);
 }
 
-///
+/// pre: x > 0
 template<Floating_point X>
 force_inline constexpr auto log(X x) -> X
 {
@@ -566,7 +589,7 @@ force_inline constexpr auto log(X x) -> X
     return std::numbers::ln2_v<S> * log2(x);
 }
 
-///
+/// pre: x > 0
 template<Floating_point X>
 force_inline constexpr auto log10(X x) -> X
 {
@@ -575,24 +598,25 @@ force_inline constexpr auto log10(X x) -> X
     return log10_2 * log2(x);
 }
 
-///
+/// pre: b > 0, x > 0
 template<Floating_point X>
 force_inline constexpr auto logB(X b, X x) -> X
 {
     return log2(x) / log2(b);
 }
 
-// Domain: x >= 0 !!!
+/// pre: x >= 0
 template<Floating_point X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
-    //assert(all(x >= 0) && "vsl::pow requires x >= 0!");
+    assert(all(x >= X{0}) && "vsl::pow: x >= 0");
     if constexpr (is_vector_v<X>) {
         // FMA plus new split impl gets us down to ~5 ULP.
-        const auto l = log2(x);
+        const auto is_zero = x == X{0};
+        const auto l = log2(select(is_zero, X{1}, x)); // avoid log2(0) on zero lanes
         const auto hi = y * l;
         const auto lo = fma(y, l, -hi);
-        return select(x == 0, X{}, detail::exp2(hi, lo));
+        return select(is_zero, X{}, detail::exp2(hi, lo));
     }
     else {
         // Widen to double, then round back to float. This gets us down to ~1 ULP.
