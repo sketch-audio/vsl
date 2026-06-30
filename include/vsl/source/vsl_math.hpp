@@ -485,8 +485,9 @@ force_inline constexpr auto exp2(X x, X corr) -> X
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
-    const auto int_part = vsl::float_to_signed(vsl::floor(x));
-    const auto dec_part = (x - vsl::signed_to_float(int_part)) + corr;
+    const auto fl = vsl::floor(x);
+    const auto dec_part = (x - fl) + corr; // fl is already integral; no round-trip
+    const auto int_part = vsl::float_to_signed(fl);
     const auto val = (vsl::signed_to_unsigned(int_part) + exp_bias) << sig_bits;
     const auto int_pow = vsl::reinterpret_as_float(val);
 
