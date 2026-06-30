@@ -479,4 +479,61 @@ auto test_math() -> void
 
 struct Register { Register() { test_math(); } } register_{};
 
+// MARK: - constexpr
+
+namespace constexpr_checks {
+
+using vsl::abs_equal;
+
+// Primitives (bit-exact with std for these inputs).
+static_assert(vsl::abs(-3.5f) == 3.5f);
+static_assert(vsl::abs(2.0) == 2.0);
+static_assert(vsl::trunc(2.7f) == 2.f);
+static_assert(vsl::trunc(-2.7f) == -2.f);
+static_assert(vsl::floor(2.7f) == 2.f);
+static_assert(vsl::floor(-2.1f) == -3.f);
+static_assert(vsl::ceil(2.1f) == 3.f);
+static_assert(vsl::ceil(-2.7f) == -2.f);
+static_assert(vsl::round(2.5f) == 3.f);
+static_assert(vsl::round(-2.5f) == -3.f);
+static_assert(vsl::fmod(7.5f, 2.f) == 1.5f);
+
+// sqrt (Newton-Raphson, within tolerance of std::sqrt).
+static_assert(vsl::sqrt(4.f) == 2.f);
+static_assert(vsl::sqrt(0.f) == 0.f);
+static_assert(abs_equal(vsl::sqrt(2.f), 1.41421356f));
+static_assert(abs_equal(vsl::sqrt(1e-6f), 1e-3f));
+static_assert(abs_equal(vsl::rsqrt(4.f), 0.5f));
+
+// Exact-by-construction log/exp identities.
+static_assert(vsl::log2(8.f) == 3.f);     // pure exponent extraction
+static_assert(vsl::exp2(3.f) == 8.f);     // pure exponent insertion
+static_assert(abs_equal(vsl::log(1.f), 0.f));
+static_assert(abs_equal(vsl::exp(0.f), 1.f));
+static_assert(abs_equal(vsl::log10(1000.f), 3.f, 1e-5f));
+static_assert(abs_equal(vsl::pow(2.f, 10.f), 1024.f, 1e-2f));
+
+// Trig / hyperbolic (same polynomial as the runtime scalar path). The minimax
+// polynomials carry ~1e-7..1e-6 of error, so use a tolerance in line with the
+// runtime math tests rather than abs_equal's tight default.
+constexpr auto poly_tol = 1e-6f;
+static_assert(abs_equal(vsl::cos<true>(0.f), 1.f, poly_tol));
+static_assert(abs_equal(vsl::sin<true>(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::tan<false>(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::cos_2pi<true>(0.f), 1.f, poly_tol));
+static_assert(abs_equal(vsl::sin_2pi<true>(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::acos(1.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::asin(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::atan(1.f), std::numbers::pi_v<float> / 4.f, poly_tol));
+static_assert(abs_equal(vsl::cosh(0.f), 1.f, poly_tol));
+static_assert(abs_equal(vsl::sinh(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::tanh(0.f), 0.f, poly_tol));
+
+// A realistic DSP constant computed entirely at compile time:
+// bilinear-transform pre-warp gain for a 1 kHz cutoff at 48 kHz, tan(pi/48).
+constexpr auto g = vsl::tan<true>(std::numbers::pi_v<float> * 1000.f / 48000.f);
+static_assert(abs_equal(g, 0.0655434f, 1e-5f));
+
+} // namespace constexpr_checks
+
 } // namespace

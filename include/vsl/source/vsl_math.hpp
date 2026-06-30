@@ -3,12 +3,92 @@
 #include <algorithm> // min, max, clamp
 #include <cassert>
 #include <cmath>
+#include <concepts> // std::floating_point
+#include <cstdint>  // std::int64_t
 #include <numbers>
+#include <type_traits> // std::is_constant_evaluated
 
 #include "vsl_core.hpp"
 #include "vsl_logic.hpp"
 
 namespace vsl {
+
+// constexpr helpers.
+namespace detail {
+
+template<std::floating_point F>
+constexpr auto two_pow(int32_t n) -> F
+{
+    auto r = F{1};
+    for (auto i = int32_t{}; i < n; ++i) { r *= F{2}; }
+    for (auto i = int32_t{}; i > n; --i) { r /= F{2}; }
+    return r;
+}
+
+template<std::floating_point F>
+constexpr auto abs(F x) -> F
+{
+    return x < F{0} ? -x : x;
+}
+
+template<std::floating_point F>
+constexpr auto trunc(F x) -> F
+{
+    using I = signed_t<F>;
+    if (x != x) { return x; } // NaN
+    constexpr auto big = two_pow<F>(std::numeric_limits<F>::digits);
+    if (abs(x) >= big) { return x; }
+    return static_cast<F>(static_cast<I>(x));
+}
+
+template<std::floating_point F>
+constexpr auto floor(F x) -> F
+{
+    const auto t = trunc(x);
+    return t > x ? t - F{1} : t;
+}
+
+template<std::floating_point F>
+constexpr auto ceil(F x) -> F
+{
+    const auto t = trunc(x);
+    return t < x ? t + F{1} : t;
+}
+
+template<std::floating_point F>
+constexpr auto round(F x) -> F
+{
+    const auto t = trunc(x);
+    const auto d = x - t; // fractional part, carries the sign of x
+    if (d >= F{0.5}) { return t + F{1}; }
+    if (d <= F{-0.5}) { return t - F{1}; }
+    return t;
+}
+
+template<std::floating_point F>
+constexpr auto sqrt(F x) -> F
+{
+    constexpr auto inf = std::numeric_limits<F>::infinity();
+    if (x != x || x == inf || x == F{0}) { return x; } // NaN, +inf, +/-0
+    if (x < F{0}) { return std::numeric_limits<F>::quiet_NaN(); }
+
+    // Reduce x = m * 4^k with m in [1, 4), so sqrt(x) = sqrt(m) * 2^k.
+    auto k = int32_t{};
+    auto m = x;
+    while (m >= F{4}) { m /= F{4}; ++k; }
+    while (m < F{1}) { m *= F{4}; --k; }
+
+    // Newton-Raphson on [1, 4) from a fixed seed converges in a few steps.
+    auto g = F{1.5};
+    for (auto i = int32_t{}; i < 12; ++i) {
+        const auto next = F{0.5} * (g + m / g);
+        if (next == g) { break; }
+        g = next;
+    }
+    return g * two_pow<F>(k);
+}
+
+} // namespace detail
 
 ///
 template<Floating_point X>
@@ -18,6 +98,7 @@ force_inline constexpr auto abs(X x) -> X
         return X::abs(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::abs(x); }
         return std::abs(x);
     }
 }
@@ -30,6 +111,7 @@ force_inline constexpr auto trunc(X x) -> X
         return X::trunc(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::trunc(x); }
         return std::trunc(x);
     }
 }
@@ -42,6 +124,7 @@ force_inline constexpr auto floor(X x) -> X
         return X::floor(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::floor(x); }
         return std::floor(x);
     }
 }
@@ -54,6 +137,7 @@ force_inline constexpr auto ceil(X x) -> X
         return X::ceil(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::ceil(x); }
         return std::ceil(x);
     }
 }
@@ -66,6 +150,7 @@ force_inline constexpr auto round(X x) -> X
         return X::round(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::round(x); }
         return std::round(x);
     }
 }
@@ -80,6 +165,7 @@ force_inline constexpr auto sqrt(X x) -> X
         return X::sqrt(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return detail::sqrt(x); }
         return std::sqrt(x);
     }
 }
@@ -92,6 +178,7 @@ force_inline constexpr auto rsqrt(X x) -> X
         return X::rsqrt(x);
     }
     else {
+        if (std::is_constant_evaluated()) { return X{1} / detail::sqrt(x); }
         return 1 / std::sqrt(x);
     }
 }
@@ -106,6 +193,7 @@ force_inline constexpr auto fmod(X x, X y) -> X
         return x - trunc(x / y) * y;
     }
     else {
+        if (std::is_constant_evaluated()) { return x - detail::trunc(x / y) * y; }
         return std::fmod(x, y);
     }
 }
