@@ -2,24 +2,17 @@
 
 #include "source/bench_math.hpp"
 
-int main() {
-    std::cout << "\nRunning VSL benchmarks...\n\n";
-    bench_cos();
-    bench_sin();
-    bench_tan();
-    bench_cos_2pi();
-    bench_sin_2pi();
-    bench_acos();
-    bench_asin();
-    bench_atan();
-    bench_exp2();
-    bench_log2();
-    bench_exp();
-    bench_pow();
-    bench_sqrt();
-    bench_cosh();
-    bench_sinh();
-    bench_tanh();
-    std::cout << "Benchmarks complete.\n";
+int main()
+{
+    std::cout << "\nVSL math benchmarks vs std (equal call count, N=100000)\n";
+    std::cout << "vector = vsl on f32x4 / f64x2 (broadcast); ratios are 'x faster than std'.\n\n";
+    bench_rounding();
+    bench_roots();
+    bench_trig();
+    bench_invtrig();
+    bench_explog();
+    bench_power();
+    bench_hyperbolic();
+    std::cout << "\nBenchmarks complete.\n";
     return 0;
 }
