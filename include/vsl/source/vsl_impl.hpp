@@ -567,9 +567,16 @@ private:
     static force_inline auto vector_call round(Vector x) -> Vector
     {
 #if VSL_NEON
-        return vrndnq_f64(x);
+        return vrndaq_f64(x); // ties away from zero (FRINTA), matches std::round
 #elif VSL_SSE4
-        return _mm_round_pd(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+        // ROUNDPD only offers ties-to-even; std::round is ties-away. Build it from
+        // trunc plus a copysign(1) bump when the (exact) fractional part is >= 0.5.
+        const auto sign_mask = _mm_set1_pd(-0.0);
+        const auto tz = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC); // toward zero
+        const auto frac = _mm_andnot_pd(sign_mask, _mm_sub_pd(x, tz)); // |x - trunc(x)|
+        const auto bump = _mm_or_pd(_mm_and_pd(x, sign_mask), _mm_set1_pd(1.0)); // copysign(1, x)
+        const auto ge_half = _mm_cmpge_pd(frac, _mm_set1_pd(0.5));
+        return _mm_add_pd(tz, _mm_and_pd(ge_half, bump));
 #endif
     }
 
@@ -1187,9 +1194,16 @@ private:
     static force_inline auto vector_call round(Vector x) -> Vector
     {
 #if VSL_NEON
-        return vrndnq_f32(x);
+        return vrndaq_f32(x); // ties away from zero (FRINTA), matches std::round
 #elif VSL_SSE4
-        return _mm_round_ps(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+        // ROUNDPS only offers ties-to-even; std::round is ties-away. Build it from
+        // trunc plus a copysign(1) bump when the (exact) fractional part is >= 0.5.
+        const auto sign_mask = _mm_set1_ps(-0.0f);
+        const auto tz = _mm_round_ps(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC); // toward zero
+        const auto frac = _mm_andnot_ps(sign_mask, _mm_sub_ps(x, tz)); // |x - trunc(x)|
+        const auto bump = _mm_or_ps(_mm_and_ps(x, sign_mask), _mm_set1_ps(1.0f)); // copysign(1, x)
+        const auto ge_half = _mm_cmpge_ps(frac, _mm_set1_ps(0.5f));
+        return _mm_add_ps(tz, _mm_and_ps(ge_half, bump));
 #endif
     }
 
