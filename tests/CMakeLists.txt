@@ -7,6 +7,8 @@ target_sources(tests PRIVATE
     source/test_math.cpp
     source/test_random.cpp
     source/test_complex.cpp
+    source/test_conv.cpp
+    source/test_logic.cpp
 )
 target_link_libraries(tests PRIVATE vsl audio_bench)
 
