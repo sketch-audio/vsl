@@ -540,7 +540,7 @@ private:
     static force_inline auto vector_call trunc(Vector x) -> Vector
     {
 #if VSL_NEON
-        return vcvtq_f64_s64(vcvtq_s64_f64(x));
+        return vrndq_f64(x); // round toward zero (FRINTZ)
 #elif VSL_SSE4
         return _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
 #endif
@@ -1160,7 +1160,7 @@ private:
     static force_inline auto vector_call trunc(Vector x) -> Vector
     {
 #if VSL_NEON
-        return vcvtq_f32_s32(vcvtq_s32_f32(x));
+        return vrndq_f32(x); // round toward zero (FRINTZ)
 #elif VSL_SSE4
         return _mm_round_ps(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
 #endif
