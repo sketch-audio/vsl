@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <format>
 
@@ -103,6 +104,21 @@ auto test_math() -> void
             const auto s = std::round(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_true(v[0] == s);
+        }
+    });
+
+    Tests::add("Test vsl::round exact halves.", []() {
+        const auto halves = std::array{0.5, 1.5, 2.5, 3.5, 4.5, -0.5, -1.5, -2.5, -3.5};
+        for (auto x : halves) {
+            const auto vf = vsl::round(vsl::float32x4{static_cast<float>(x)});
+            const auto sf = std::round(static_cast<float>(x));
+            audio_bench::expect_true(vsl::all_same(vf));
+            audio_bench::expect_true(vf[0] == sf, std::format("round f32({}) = {}, std::round = {}", x, vf[0], sf));
+
+            const auto vd = vsl::round(vsl::float64x2{x});
+            const auto sd = std::round(x);
+            audio_bench::expect_true(vsl::all_same(vd));
+            audio_bench::expect_true(vd[0] == sd, std::format("round f64({}) = {}, std::round = {}", x, vd[0], sd));
         }
     });
 
