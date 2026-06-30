@@ -15,7 +15,7 @@
 
 // We need FMA.
 #if defined(VSL_SSE4) && !defined(__FMA__) && !defined(_MSC_VER)
-#error "No FMA support detected."
+#error "No FMA support detected. May need to add -mfma to your compiler flags."
 #endif
 
 #if defined(_MSC_VER)
