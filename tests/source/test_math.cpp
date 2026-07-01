@@ -213,6 +213,24 @@ auto test_math() -> void
         errors.report();
     });
 
+    Tests::add("Test vsl::tan_pi.", []() {
+        audio_bench::log("Starting Test vsl::tan_pi.");
+        // tan_pi(f/fs) = tan(pi * f/fs), the filter prewarp; 20000/44100 = ~0.4535f.
+        auto xs = Range::make<float>({-0.4535f, 0.4535f, 100000});
+
+        auto errors = Tracker<float>{};
+        for (auto x : xs) {
+            const auto v = vsl::tan_pi<false>(vsl::float32x4{x});
+            const auto s = static_cast<float>(std::tan(std::numbers::pi_v<double> * x));
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], s, Error::Absolute{2e-6f}, std::format("Fail tan_pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail tan_pi({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail tan_pi({})", x));
+            errors.update_with(x, v[0], s);
+        }
+        errors.report();
+    });
+
     // MARK: - inverse trig
 
     Tests::add("Test vsl::acos.", []() {

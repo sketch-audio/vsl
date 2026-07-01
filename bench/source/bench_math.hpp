@@ -118,6 +118,7 @@ inline auto bench_trig_no_wrap() -> void
     both_unary("tan", -1.4, 1.4,      [](auto x) { return vsl::tan<false>(x); }, [](auto x) { return std::tan(x); });
     both_unary("cos_2pi", 0, 1, [](auto x) { return vsl::cos_2pi<false>(x); }, [](auto x) { using T = decltype(x); return std::cos(T(2) * std::numbers::pi_v<T> * x); });
     both_unary("sin_2pi", 0, 1, [](auto x) { return vsl::sin_2pi<false>(x); }, [](auto x) { using T = decltype(x); return std::sin(T(2) * std::numbers::pi_v<T> * x); });
+    both_unary("tan_pi", -0.49, 0.49, [](auto x) { return vsl::tan_pi<false>(x); }, [](auto x) { using T = decltype(x); return std::tan(std::numbers::pi_v<T> * x); });
 }
 
 inline auto bench_trig_wrap() -> void
@@ -130,6 +131,7 @@ inline auto bench_trig_wrap() -> void
     both_unary("tan", -1.4, 1.4,      [](auto x) { return vsl::tan<true>(x); }, [](auto x) { return std::tan(x); });
     both_unary("cos_2pi", 0, 1, [](auto x) { return vsl::cos_2pi<true>(x); }, [](auto x) { using T = decltype(x); return std::cos(T(2) * std::numbers::pi_v<T> * x); });
     both_unary("sin_2pi", 0, 1, [](auto x) { return vsl::sin_2pi<true>(x); }, [](auto x) { using T = decltype(x); return std::sin(T(2) * std::numbers::pi_v<T> * x); });
+    both_unary("tan_pi", -0.49, 0.49, [](auto x) { return vsl::tan_pi<true>(x); }, [](auto x) { using T = decltype(x); return std::tan(std::numbers::pi_v<T> * x); });
 }
 
 inline auto bench_invtrig() -> void

@@ -382,6 +382,28 @@ force_inline constexpr auto sin_2pi(X x) -> X
     return -u * x * (x - 1.f) * p;
 }
 
+///
+template<bool needs_wrap, Floating_point X>
+force_inline constexpr auto tan_pi(X x) -> X
+{
+    if constexpr (needs_wrap) {
+        x -= round(x);  // period 1 -> [-1/2, 1/2]
+    }
+    else {
+        assert(all(x >= X{-0.5f}) && all(x <= X{0.5f}) && "vsl::tan_pi: x in [-1/2, 1/2] without wrap");
+    }
+
+    const auto x2 = x * x;
+    auto q = X(-2.914071456e-02f);
+    q = fma(q, x2, X(-5.132636800e-02f));
+    q = fma(q, x2, X(-1.348624676e-01f));
+    q = fma(q, x2, X(-5.577344894e-01f));
+    q = fma(q, x2, X(7.853981853e-01f));
+    const auto lo = 0.5f - x;
+    const auto hi = 0.5f + x;
+    return x * q / (lo * hi);
+}
+
 // MARK: - Inverse Trig Functions
 
 /// pre: x in [-1, 1]
