@@ -124,17 +124,6 @@ const auto z = Cplex{re, im};
 const auto w = z * z;
 ```
 
-## Denormals
-
-`vsl_denormals.hpp` provides `No_denormals`, an RAII guard that sets the flush-to-zero and denormals-are-zero flags on x86 (SSE MXCSR) for the duration of its scope. On NEON the struct is a no-op.
-
-```cpp
-{
-    auto nd = vsl::No_denormals{};
-    // Denormals flushed to zero in this scope.
-}
-```
-
 ## Building tests and benchmarks
 
 ```sh

@@ -22,7 +22,7 @@ headers directly, note that two were also renamed beyond the extension:
 | `vsl_rand.h` | `vsl_random.hpp` |
 
 The rest are a straight `.h` → `.hpp` (`vsl_core`, `vsl_impl`, `vsl_logic`,
-`vsl_math`, `vsl_complex`, `vsl_denormals`).
+`vsl_math`, `vsl_complex`).
 
 ## 2. Trig functions take an explicit `needs_wrap` template argument
 
@@ -70,6 +70,10 @@ vsl::round(2.5f);   // was 2, now 3
 ```
 
 Only exact `.5` inputs are affected.
+
+## 6. vsl::No_denormals is gone.
+
+You should be able to rely on the new Denormal_guard in tinyplug now present in all wrappers.
 
 ## New, additive (no action needed)
 
