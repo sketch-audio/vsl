@@ -1,6 +1,6 @@
 # VSL — Vector Support Library
 
-A header-only C++20 SIMD math library. All functions operate uniformly across scalar `float`, scalar `double`, `float32x4` (4-lane f32), and `float64x2` (2-lane f64) through a single templated implementation. SIMD dispatch is resolved at compile time with no virtual dispatch or runtime branching.
+A header-only C++20 SIMD-compatible math library.
 
 ## Requirements
 
@@ -89,7 +89,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 | `fma(a, b, c)` | Fused multiply-add (`a*b + c`, single rounding) |
 | `sign` | |
 | `cos<needs_wrap>(x)`, `sin<needs_wrap>(x)`, `tan<needs_wrap>(x)` | Template parameter suppresses range reduction when input is already reduced |
-| `cos_2pi<needs_wrap>(x)`, `sin_2pi<needs_wrap>(x)` | Input in cycles [0, 1] |
+| `cos_2pi<needs_wrap>(x)`, `sin_2pi<needs_wrap>(x)`, `tan_pi<needs_wrap>(x)` | Input in cycles [0, 1] |
 | `acos(x)`, `asin(x)`, `atan(x)` | |
 | `exp(x)`, `exp2(x)` | |
 | `log(x)`, `log2(x)`, `log10(x)` | |
