@@ -85,6 +85,7 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 | `wrap(x, k)` | Symmetric wrap to [-k, k] |
 | `wrap(x, a, b)` | Arbitrary range wrap |
 | `min`, `max`, `clamp` | |
+| `smooth_max(a, b, c)` | Smooth max of `a`, `b` with parameter `c` |
 | `fma(a, b, c)` | Fused multiply-add (`a*b + c`, single rounding) |
 | `sign` | |
 | `cos<needs_wrap>(x)`, `sin<needs_wrap>(x)`, `tan<needs_wrap>(x)` | Template parameter suppresses range reduction when input is already reduced |

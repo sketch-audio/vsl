@@ -708,6 +708,12 @@ force_inline constexpr auto max(X a, C b) -> X
     }
 }
 
+template<Floating_point X, Floating_point C>
+force_inline constexpr auto smooth_max(X a, X b, C s) -> X
+{
+    return X(0.5f) * (ya + yb + vsl::sqrt((ya - yb) * (ya - yb) + X(s)));
+}
+
 ///
 template<Floating_point X, Floating_point C>
 force_inline constexpr auto clamp(X x, C a, C b) -> X
