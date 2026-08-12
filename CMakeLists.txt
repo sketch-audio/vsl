@@ -20,7 +20,7 @@ if(PROJECT_IS_TOP_LEVEL)
     FetchContent_Declare(
         audio_bench
         GIT_REPOSITORY https://github.com/sketch-audio/audio_bench.git
-        GIT_TAG main
+        GIT_TAG 0adbf7a177fda9d44f606b3d74aafcfda5799940
         SYSTEM
     )
     FetchContent_MakeAvailable(audio_bench)
