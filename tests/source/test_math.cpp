@@ -428,13 +428,16 @@ auto test_math() -> void
         audio_bench::log("Starting Test vsl::pow.");
 
         // fma() picks unfused mul+add at runtime on CPUs without FMA3 (see VSL_NEEDS_FMA_CHECK in
-        // vsl_impl.hpp), which costs a few extra ULPs through pow's exp2/log2 chain. Real FMA3
-        // hardware (the default here) doesn't need the extra slack; VSL_FORCE_FMA_FALLBACK_FOR_TESTS
-        // exercises the fallback path deliberately (measured worst case: 30 ULP / 1.88e-6 rel;
-        // margins below are ~30-60% above that).
-#if defined(VSL_FORCE_FMA_FALLBACK_FOR_TESTS)
-        constexpr auto ulp_slack = size_t{30};
-        constexpr auto rel_slack = 1.5f;
+        // vsl_impl.hpp), which costs a few extra ULPs through pow's exp2/log2 chain. Key this off
+        // the actual runtime flag fma() uses (vsl::detail::has_fma3), not a compile-time
+        // assumption about the build machine — what the *build* machine's CPUID reports isn't
+        // necessarily what fma() resolves at runtime (e.g. under Rosetta translation on Apple
+        // Silicon), so tying slack to a "this build should have real FMA" guess can check the
+        // wrong tolerance against whichever branch actually ran. Measured worst case for the
+        // fallback path: 30 ULP / 1.88e-6 rel; margins below are ~30-60% above that.
+#if defined(VSL_NEEDS_FMA_CHECK)
+        const auto ulp_slack = vsl::detail::has_fma3 ? size_t{0} : size_t{30};
+        const auto rel_slack = vsl::detail::has_fma3 ? 1.f : 1.5f;
 #else
         constexpr auto ulp_slack = size_t{0};
         constexpr auto rel_slack = 1.f;
