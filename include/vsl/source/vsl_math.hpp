@@ -88,6 +88,23 @@ constexpr auto sqrt(F x) -> F
     return g * two_pow<F>(k);
 }
 
+#if defined(VSL_NEEDS_FMA_CHECK) && !defined(_MSC_VER)
+// std::fma() can no longer be folded into a single hardware instruction now that we don't pass
+// -mfma at the TU level (see VSL_NEEDS_FMA_CHECK in vsl_impl.hpp) -- without that, it falls back
+// to a slow, correctly-rounded software implementation instead. Dispatch the same way the SIMD
+// fma() does: real hardware FMA via this target("fma")-scoped call when detail::has_fma3 is
+// true, cheap unfused mul+add otherwise (skipping std::fma()'s slow path entirely -- we don't
+// need its extra correctness guarantees here). Can't be force_inline for the same reason as
+// fma_hw() in vsl_impl.hpp: Clang treats inlining an always_inline, target("fma") function into
+// a caller without that target as a hard compile error, not a soft "don't inline".
+template<std::floating_point F>
+__attribute__((target("fma")))
+inline auto fma_hw(F a, F b, F c) -> F
+{
+    return std::fma(a, b, c);
+}
+#endif
+
 } // namespace detail
 
 ///
@@ -165,7 +182,11 @@ force_inline constexpr auto fma(X a, X b, X c) -> X
     }
     else {
         if (std::is_constant_evaluated()) { return a * b + c; }
+#if defined(VSL_NEEDS_FMA_CHECK) && !defined(_MSC_VER)
+        return detail::has_fma3 ? detail::fma_hw(a, b, c) : a * b + c;
+#else
         return std::fma(a, b, c);
+#endif
     }
 }
 
