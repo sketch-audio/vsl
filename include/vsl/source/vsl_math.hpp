@@ -156,7 +156,7 @@ force_inline constexpr auto round(X x) -> X
 }
 
 
-///
+/// On the SSE4.2 path this is just plain a * b + c. Would love to revisit later but it was becoming a whole thing.
 template<Floating_point X>
 force_inline constexpr auto fma(X a, X b, X c) -> X
 {
@@ -165,7 +165,11 @@ force_inline constexpr auto fma(X a, X b, X c) -> X
     }
     else {
         if (std::is_constant_evaluated()) { return a * b + c; }
+#if VSL_SSE4
+        return a * b + c;
+#else
         return std::fma(a, b, c);
+#endif
     }
 }
 

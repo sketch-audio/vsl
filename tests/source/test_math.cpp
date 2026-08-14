@@ -427,6 +427,15 @@ auto test_math() -> void
     Tests::add("Test vsl::pow.", []() {
         audio_bench::log("Starting Test vsl::pow.");
 
+        // Not having fma on SSE4.2 costs us a few ULPs here.
+#if VSL_SSE4
+        constexpr auto ulp_adj = size_t{30};
+        constexpr auto rel_adj = 1.5f;
+#else
+        constexpr auto ulp_adj = size_t{0};
+        constexpr auto rel_adj = 1.f;
+#endif
+
         auto run = [](const char* label, float base_lo, float base_hi, float exp_lo, float exp_hi, float rel, size_t ulp, size_t n) {
             audio_bench::log(label);
             auto bases = Range::make<float>({base_lo, base_hi, n});
@@ -447,13 +456,13 @@ auto test_math() -> void
 
         constexpr auto e = std::numbers::e_v<float>;
         // base 10, -200..+200 dB (db to lin is 10^(x/20))
-        run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f, 9, 100000);
-        run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f, 2, 100000);
-        run("base e, exp -20..20", e, e, -20, 20, 2e-6f, 25, 100000);
-        run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f, 10, 100000);
-        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f, 12, 100000);
-        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f, 24, 100000);
-        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f, 24, 100000);
+        run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f * rel_adj, 9 + ulp_adj, 100000);
+        run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f * rel_adj, 2 + ulp_adj, 100000);
+        run("base e, exp -20..20", e, e, -20, 20, 2e-6f * rel_adj, 25 + ulp_adj, 100000);
+        run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f * rel_adj, 10 + ulp_adj, 100000);
+        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f * rel_adj, 12 + ulp_adj, 100000);
+        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f * rel_adj, 24 + ulp_adj, 100000);
+        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f * rel_adj, 24 + ulp_adj, 100000);
     });
 
     Tests::add("Test vsl::sqrt.", []() {

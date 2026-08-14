@@ -13,11 +13,6 @@
 #error "No SIMD support detected."
 #endif
 
-// We need FMA.
-#if defined(VSL_SSE4) && !defined(__FMA__) && !defined(_MSC_VER)
-#error "No FMA support detected. May need to add -mfma to your compiler flags."
-#endif
-
 #if defined(_MSC_VER)
 #define force_inline inline __forceinline
 #define vector_call __vectorcall
@@ -410,7 +405,7 @@ private:
 #if VSL_NEON
         return vfmaq_f64(c, a, b);
 #elif VSL_SSE4
-        return _mm_fmadd_pd(a, b, c);
+        return _mm_add_pd(_mm_mul_pd(a, b), c);
 #endif
     }
 
@@ -1045,7 +1040,7 @@ private:
 #if VSL_NEON
         return vfmaq_f32(c, a, b);
 #elif VSL_SSE4
-        return _mm_fmadd_ps(a, b, c);
+        return _mm_add_ps(_mm_mul_ps(a, b), c);
 #endif
     }
 

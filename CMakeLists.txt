@@ -11,8 +11,7 @@ target_include_directories(vsl INTERFACE include)
 if(MSVC)
     target_compile_options(vsl INTERFACE /arch:SSE4.2)
 elseif(APPLE)
-    # We need to restrict the `-mfma` to the x86_64 slice.
-    target_compile_options(vsl INTERFACE -msse4.2 -Xarch_x86_64 -mfma -Wno-unused-command-line-argument)
+    target_compile_options(vsl INTERFACE -msse4.2 -Wno-unused-command-line-argument)
 endif()
 
 if(PROJECT_IS_TOP_LEVEL)
