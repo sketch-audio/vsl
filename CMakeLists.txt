@@ -11,8 +11,10 @@ target_include_directories(vsl INTERFACE include)
 if(MSVC)
     target_compile_options(vsl INTERFACE /arch:SSE4.2)
 elseif(APPLE)
-    # We need to restrict the `-mfma` to the x86_64 slice.
-    target_compile_options(vsl INTERFACE -msse4.2 -Xarch_x86_64 -mfma -Wno-unused-command-line-argument)
+    # No -mfma: FMA3 isn't guaranteed on every Mac still on a supported macOS version (e.g. the
+    # Mac Pro Late 2013's Ivy Bridge-EP Xeons predate it), so fma() detects it at runtime instead
+    # (see VSL_NEEDS_FMA_CHECK in vsl_impl.hpp) rather than letting the whole TU assume it.
+    target_compile_options(vsl INTERFACE -msse4.2 -Wno-unused-command-line-argument)
 endif()
 
 if(PROJECT_IS_TOP_LEVEL)

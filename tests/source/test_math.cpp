@@ -427,6 +427,19 @@ auto test_math() -> void
     Tests::add("Test vsl::pow.", []() {
         audio_bench::log("Starting Test vsl::pow.");
 
+        // fma() picks unfused mul+add at runtime on CPUs without FMA3 (see VSL_NEEDS_FMA_CHECK in
+        // vsl_impl.hpp), which costs a few extra ULPs through pow's exp2/log2 chain. Real FMA3
+        // hardware (the default here) doesn't need the extra slack; VSL_FORCE_FMA_FALLBACK_FOR_TESTS
+        // exercises the fallback path deliberately (measured worst case: 30 ULP / 1.88e-6 rel;
+        // margins below are ~30-60% above that).
+#if defined(VSL_FORCE_FMA_FALLBACK_FOR_TESTS)
+        constexpr auto ulp_slack = size_t{30};
+        constexpr auto rel_slack = 1.5f;
+#else
+        constexpr auto ulp_slack = size_t{0};
+        constexpr auto rel_slack = 1.f;
+#endif
+
         auto run = [](const char* label, float base_lo, float base_hi, float exp_lo, float exp_hi, float rel, size_t ulp, size_t n) {
             audio_bench::log(label);
             auto bases = Range::make<float>({base_lo, base_hi, n});
@@ -447,13 +460,13 @@ auto test_math() -> void
 
         constexpr auto e = std::numbers::e_v<float>;
         // base 10, -200..+200 dB (db to lin is 10^(x/20))
-        run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f, 9, 100000);
-        run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f, 2, 100000);
-        run("base e, exp -20..20", e, e, -20, 20, 2e-6f, 25, 100000);
-        run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f, 10, 100000);
-        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f, 12, 100000);
-        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f, 24, 100000);
-        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f, 24, 100000);
+        run("base 10, exp -10..10", 10, 10, -10, 10, 2e-6f * rel_slack, 9 + ulp_slack, 100000);
+        run("base 2, exp -50..50", 2, 2, -50, 50, 5e-7f * rel_slack, 2 + ulp_slack, 100000);
+        run("base e, exp -20..20", e, e, -20, 20, 2e-6f * rel_slack, 25 + ulp_slack, 100000);
+        run("sqrt via pow, base 0..1e6", 0.001f, 1e6f, 0.5f, 0.5f, 1e-6f * rel_slack, 10 + ulp_slack, 100000);
+        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f, 1e-6f * rel_slack, 12 + ulp_slack, 100000);
+        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10, 2e-6f * rel_slack, 24 + ulp_slack, 100000);
+        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f * rel_slack, 24 + ulp_slack, 100000);
     });
 
     Tests::add("Test vsl::sqrt.", []() {

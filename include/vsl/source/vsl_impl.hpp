@@ -13,9 +13,51 @@
 #error "No SIMD support detected."
 #endif
 
-// We need FMA.
-#if defined(VSL_SSE4) && !defined(__FMA__) && !defined(_MSC_VER)
-#error "No FMA support detected. May need to add -mfma to your compiler flags."
+// x86_64 FMA3 is a distinct CPU feature from the SSE4.2 baseline we compile for, and neither
+// MSVC nor our Apple build flags give a compile-time guarantee it's present: MSVC compiles
+// _mm_fmadd_p{s,d} regardless of /arch, and we don't pass -mfma on Apple either (that would let
+// the compiler assume/autovectorize FMA anywhere in the TU, not just in the two call sites
+// below). Neither Windows nor macOS has a hardware floor that rules out pre-FMA3 CPUs at every
+// supported OS version (Windows 10 still runs pre-Haswell/pre-Excavator machines; the Mac Pro
+// Late 2013 — Ivy Bridge-EP — remains supported through macOS 12). So: detect FMA3 at runtime
+// and use it only when present, rather than assuming it. NEON/AArch64 needs none of this — FMA
+// is a mandatory baseline feature there, so VSL_NEON's fma() is untouched below.
+#if defined(VSL_SSE4)
+#define VSL_NEEDS_FMA_CHECK 1
+#endif
+
+#if defined(VSL_NEEDS_FMA_CHECK)
+#if defined(_MSC_VER)
+#include <intrin.h>
+#else
+#include <cpuid.h>
+#endif
+
+namespace vsl::detail {
+
+inline auto detect_fma3() -> bool
+{
+#if defined(VSL_FORCE_FMA_FALLBACK_FOR_TESTS)
+    return false; // Test-only override so the fallback path can be exercised on FMA3 hardware.
+#elif defined(_MSC_VER)
+    auto info = std::array<int, 4>{};
+    __cpuid(info.data(), 1);
+    return (info[2] & (1 << 12)) != 0; // ECX bit 12 = FMA3.
+#else
+    unsigned int eax{}, ebx{}, ecx{}, edx{};
+    if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+        return false;
+    }
+    return (ecx & (1 << 12)) != 0; // ECX bit 12 = FMA3.
+#endif
+}
+
+// Resolved once during static init, well before any audio thread runs, so the branches in
+// fma() below read an invariant value — the branch predictor learns it immediately and it
+// costs nothing in the hot path after warm-up.
+inline const auto has_fma3 = detect_fma3();
+
+} // namespace vsl::detail
 #endif
 
 #if defined(_MSC_VER)
@@ -405,10 +447,31 @@ private:
 #endif
     }
 
+#if defined(VSL_NEEDS_FMA_CHECK) && !defined(_MSC_VER)
+    // Clang/GCC require the target feature to be declared on any function that calls a FMA
+    // intrinsic (we don't pass -mfma at the TU level, see VSL_NEEDS_FMA_CHECK above). This can't
+    // be force_inline: Clang treats inlining an always_inline, target("fma") function into a
+    // caller without that target as a hard compile error, not a soft "don't inline" — so this
+    // stays a plain (opportunistically inlined) function, called only via fma() below once
+    // detail::has_fma3 is known true.
+    __attribute__((target("fma")))
+    static inline auto vector_call fma_hw(Vector a, Vector b, Vector c) -> Vector
+    {
+        return _mm_fmadd_pd(a, b, c);
+    }
+#elif defined(VSL_NEEDS_FMA_CHECK)
+    static force_inline auto vector_call fma_hw(Vector a, Vector b, Vector c) -> Vector
+    {
+        return _mm_fmadd_pd(a, b, c);
+    }
+#endif
+
     static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
     {
 #if VSL_NEON
         return vfmaq_f64(c, a, b);
+#elif defined(VSL_NEEDS_FMA_CHECK)
+        return detail::has_fma3 ? fma_hw(a, b, c) : _mm_add_pd(_mm_mul_pd(a, b), c);
 #elif VSL_SSE4
         return _mm_fmadd_pd(a, b, c);
 #endif
@@ -1040,10 +1103,25 @@ private:
 #endif
     }
 
+#if defined(VSL_NEEDS_FMA_CHECK) && !defined(_MSC_VER)
+    __attribute__((target("fma")))
+    static inline auto vector_call fma_hw(Vector a, Vector b, Vector c) -> Vector
+    {
+        return _mm_fmadd_ps(a, b, c);
+    }
+#elif defined(VSL_NEEDS_FMA_CHECK)
+    static force_inline auto vector_call fma_hw(Vector a, Vector b, Vector c) -> Vector
+    {
+        return _mm_fmadd_ps(a, b, c);
+    }
+#endif
+
     static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
     {
 #if VSL_NEON
         return vfmaq_f32(c, a, b);
+#elif defined(VSL_NEEDS_FMA_CHECK)
+        return detail::has_fma3 ? fma_hw(a, b, c) : _mm_add_ps(_mm_mul_ps(a, b), c);
 #elif VSL_SSE4
         return _mm_fmadd_ps(a, b, c);
 #endif
