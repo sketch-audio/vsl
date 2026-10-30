@@ -10,6 +10,31 @@ namespace {
 template<typename T>
 using Tracker = audio_bench::Error_tracker<T>; // Dumb can't do this in function scope.
 
+// Under -ffast-math on x86, clang still swaps division and 1 / sqrt for reciprocal estimates plus
+// Newton steps, which VSL can't opt out of without making std::fma an errno-setting call. Worth ~1 ULP.
+#if defined(__FAST_MATH__) && VSL_SSE4
+constexpr auto fast_math_estimates = true;
+constexpr auto slack = 2;
+#else
+constexpr auto fast_math_estimates = false;
+constexpr auto slack = 1;
+#endif
+
+// sin(2 pi x) in double, exact at the zeros: reduce by quarter turns first.
+auto sin_turns(double x) -> double
+{
+    const auto n = std::nearbyint(4 * x);
+    const auto a = 2 * std::numbers::pi * (x - n / 4);
+    switch (static_cast<long long>(n) & 3) {
+        case 0: return std::sin(a);
+        case 1: return std::cos(a);
+        case 2: return -std::sin(a);
+        default: return -std::cos(a);
+    }
+}
+
+auto cos_turns(double x) -> double { return sin_turns(x + 0.25); }
+
 auto test_math() -> void
 {
     // MARK: - basic
@@ -126,17 +151,16 @@ auto test_math() -> void
 
     Tests::add("Test vsl::cos.", []() {
         audio_bench::log("Starting Test vsl::cos.");
-        constexpr auto pi = std::numbers::pi_v<float>;
-        auto xs = Range::make<float>({-pi, pi, 100000});
+        auto xs = Range::make<float>({-100, 100, 1000000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::cos<false>(vsl::float32x4{x});
+            const auto v = vsl::cos(vsl::float32x4{x});
             const auto s = std::cos(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{4e-7f}, std::format("Fail cos({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail cos({})", x));
-            audio_bench::expect_close(v[0], s, Error::Ulp_distance{7}, std::format("Fail cos({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail cos({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -145,11 +169,11 @@ auto test_math() -> void
     Tests::add("Test vsl::sin.", []() {
         audio_bench::log("Starting Test vsl::sin.");
         constexpr auto pi = std::numbers::pi_v<float>;
-        auto xs = Range::make<float>({-pi, pi, 100000});
+        auto xs = Range::make<float>({-100, 100, 1000000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::sin<false>(vsl::float32x4{x});
+            const auto v = vsl::sin(vsl::float32x4{x});
             const auto s = std::sin(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f}, std::format("Fail sin({})", x));
@@ -158,6 +182,20 @@ auto test_math() -> void
             errors.update_with(x, v[0], s);
         }
         errors.report();
+
+        audio_bench::log("Testing kernel::sin on [-pi, pi]");
+        xs = Range::make<float>({-pi, pi, 100000});
+        for (auto x : xs) {
+            const auto v = vsl::kernel::sin(vsl::float32x4{x});
+            audio_bench::expect_close(v[0], std::sin(x), Error::Ulp_distance{5}, std::format("Fail kernel::sin({})", x));
+        }
+
+        audio_bench::log("Testing tiny x");
+        xs = Range::make<float>({-1e-6f, 1e-6f, 100000});
+        for (auto x : xs) {
+            const auto v = vsl::sin(vsl::float32x4{x});
+            audio_bench::expect_close(v[0], std::sin(x), Error::Ulp_distance{3}, std::format("Fail sin({})", x));
+        }
     });
 
     Tests::add("Test vsl::tan.", []() {
@@ -169,24 +207,33 @@ auto test_math() -> void
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::tan<false>(vsl::float32x4{x});
+            const auto v = vsl::tan(vsl::float32x4{x});
             const auto s = std::tan(x);
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-6f}, std::format("Fail tan({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail tan({})", x));
             audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail tan({})", x));
+            const auto k = vsl::kernel::tan(vsl::float32x4{x});
+            audio_bench::expect_close(k[0], s, Error::Ulp_distance{6}, std::format("Fail kernel::tan({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
+
+        audio_bench::log("Testing range -100...100, poles included");
+        xs = Range::make<float>({-100, 100, 1000000});
+        for (auto x : xs) {
+            const auto v = vsl::tan(vsl::float32x4{x});
+            audio_bench::expect_close(v[0], std::tan(x), Error::Ulp_distance{9}, std::format("Fail tan({})", x));
+        }
     });
 
     Tests::add("Test vsl::cos_2pi.", []() {
         audio_bench::log("Starting Test vsl::cos_2pi.");
-        auto xs = Range::make<float>({0, 1, 100000});
+        auto xs = Range::make<float>({-10, 10, 1000000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::cos_2pi<false>(vsl::float32x4{x});
-            const auto s = static_cast<float>(std::cos(2 * std::numbers::pi_v<double> * x));
+            const auto v = vsl::cos_2pi(vsl::float32x4{x});
+            const auto s = static_cast<float>(cos_turns(x));
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{5e-7f}, std::format("Fail cos_2pi({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{5e-7f}, std::format("Fail cos_2pi({})", x));
@@ -198,19 +245,31 @@ auto test_math() -> void
 
     Tests::add("Test vsl::sin_2pi.", []() {
         audio_bench::log("Starting Test vsl::sin_2pi.");
-        auto xs = Range::make<float>({0, 1, 100001, false}); // We're exact at 0.5 and 1. Avoid those in the test data.
+        auto xs = Range::make<float>({-10, 10, 1000000});
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::sin_2pi<false>(vsl::float32x4{x});
-            const auto s = static_cast<float>(std::sin(2 * std::numbers::pi_v<double> * x));
+            const auto v = vsl::sin_2pi(vsl::float32x4{x});
+            const auto s = static_cast<float>(sin_turns(x));
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-7f}, std::format("Fail sin_2pi({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail sin_2pi({})", x));
             audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail sin_2pi({})", x));
             errors.update_with(x, v[0], s);
+
+            const auto [sc_s, sc_c] = vsl::sin_cos_2pi(vsl::float32x4{x});
+            audio_bench::expect_true(sc_s[0] == v[0] && sc_c[0] == vsl::cos_2pi(vsl::float32x4{x})[0], std::format("Fail sin_cos_2pi({})", x));
         }
         errors.report();
+
+        audio_bench::log("Testing kernel::sin_2pi and kernel::cos_2pi on [0, 1]");
+        xs = Range::make<float>({0, 1, 100000});
+        for (auto x : xs) {
+            const auto s = vsl::kernel::sin_2pi(vsl::float32x4{x});
+            const auto c = vsl::kernel::cos_2pi(vsl::float32x4{x});
+            audio_bench::expect_close(s[0], static_cast<float>(sin_turns(x)), Error::Ulp_distance{5}, std::format("Fail kernel::sin_2pi({})", x));
+            audio_bench::expect_close(c[0], static_cast<float>(cos_turns(x)), Error::Ulp_distance{8}, std::format("Fail kernel::cos_2pi({})", x));
+        }
     });
 
     Tests::add("Test vsl::tan_pi.", []() {
@@ -220,8 +279,9 @@ auto test_math() -> void
 
         auto errors = Tracker<float>{};
         for (auto x : xs) {
-            const auto v = vsl::tan_pi<false>(vsl::float32x4{x});
-            const auto s = static_cast<float>(std::tan(std::numbers::pi_v<double> * x));
+            const auto shifted = x + 3.f; // a later period
+            const auto v = vsl::tan_pi(vsl::float32x4{shifted});
+            const auto s = static_cast<float>(std::tan(std::numbers::pi_v<double> * (static_cast<double>(shifted) - 3.0)));
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-6f}, std::format("Fail tan_pi({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{4e-7f}, std::format("Fail tan_pi({})", x));
@@ -229,6 +289,22 @@ auto test_math() -> void
             errors.update_with(x, v[0], s);
         }
         errors.report();
+
+        audio_bench::log("Testing kernel::tan_pi");
+        xs = Range::make<float>({-0.4535f, 0.4535f, 100000});
+        for (auto x : xs) {
+            const auto v = vsl::kernel::tan_pi(vsl::float32x4{x});
+            const auto s = static_cast<float>(std::tan(std::numbers::pi_v<double> * x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{5}, std::format("Fail kernel::tan_pi({})", x));
+        }
+
+        audio_bench::log("Testing kernel::tan_pi<Fast> on 0...20 kHz at 48 kHz");
+        xs = Range::make<float>({0, 20000.f / 48000.f, 100000});
+        for (auto x : xs) {
+            const auto v = vsl::kernel::tan_pi<vsl::Precision::Fast>(vsl::float32x4{x});
+            const auto s = static_cast<float>(std::tan(std::numbers::pi_v<double> * x));
+            audio_bench::expect_close(v[0], s, Error::Relative{1e-4f}, std::format("Fail kernel::tan_pi<Fast>({})", x));
+        }
     });
 
     // MARK: - inverse trig
@@ -263,8 +339,8 @@ auto test_math() -> void
             const auto v = vsl::asin(vsl::float32x4{x});
             const auto s = std::asin(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f}, std::format("Fail asin({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{6e-7f}, std::format("Fail asin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{3e-7f * slack}, std::format("Fail asin({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{6e-7f * slack}, std::format("Fail asin({})", x));
             audio_bench::expect_close(v[0], s, Error::Ulp_distance{6}, std::format("Fail asin({})", x));
             errors.update_with(x, v[0], s);
         }
@@ -354,6 +430,42 @@ auto test_math() -> void
             errors.update_with(x, v[0], s);
         }
         errors.report();
+    });
+
+    Tests::add("Test vsl::expm1.", []() {
+        audio_bench::log("Starting Test vsl::expm1.");
+        auto xs = Range::make<float>({-18, 85, 1000000});
+        for (auto x : xs) {
+            const auto v = vsl::expm1(vsl::float32x4{x});
+            audio_bench::expect_true(vsl::all_same(v));
+            audio_bench::expect_close(v[0], std::expm1(x), Error::Ulp_distance{4}, std::format("Fail expm1({})", x));
+            audio_bench::expect_true(vsl::expm1(x) == v[0], std::format("Fail expm1({}) scalar != vector", x));
+        }
+
+        audio_bench::log("Testing small x: one-pole coefficients at low cutoffs");
+        xs = Range::make<float>({-1e-3f, 1e-3f, 100000});
+        for (auto x : xs) {
+            const auto v = vsl::expm1(vsl::float32x4{x});
+            audio_bench::expect_close(v[0], std::expm1(x), Error::Ulp_distance{3}, std::format("Fail expm1({})", x));
+        }
+    });
+
+    Tests::add("Test vsl::db_to_gain and vsl::gain_to_db.", []() {
+        audio_bench::log("Starting Test vsl::db_to_gain and vsl::gain_to_db.");
+        auto dbs = Range::make<float>({-200, 200, 1000000});
+        for (auto db : dbs) {
+            const auto g = vsl::db_to_gain(vsl::float32x4{db});
+            const auto s = static_cast<float>(std::pow(10.0, db / 20.0));
+            audio_bench::expect_close(g[0], s, Error::Relative{2e-6f}, std::format("Fail db_to_gain({})", db));
+        }
+        auto gains = Range::make<float>({1e-10f, 1e10f, 1000000});
+        for (auto g : gains) {
+            const auto db = vsl::gain_to_db(vsl::float32x4{g});
+            const auto s = static_cast<float>(20 * std::log10(static_cast<double>(g)));
+            audio_bench::expect_close(db[0], s, Error::Absolute{3e-5f}, std::format("Fail gain_to_db({})", g));
+        }
+        audio_bench::expect_true(vsl::db_to_gain(vsl::float32x4{0.f})[0] == 1.f, "Fail db_to_gain(0) != 1");
+        audio_bench::expect_true(vsl::gain_to_db(vsl::float32x4{1.f})[0] == 0.f, "Fail gain_to_db(1) != 0");
     });
 
     Tests::add("Test vsl::log.", []() {
@@ -465,6 +577,34 @@ auto test_math() -> void
         run("base 1.05..9, exp 10", 1.05f, 9, 10, 10, 2e-6f * rel_adj, 24 + ulp_adj, 100000);
     });
 
+    Tests::add("Test vsl::pow<Fast>.", []() {
+        audio_bench::log("Starting Test vsl::pow<Fast>.");
+
+        auto run = [](const char* label, float base_lo, float base_hi, float exp_lo, float exp_hi) {
+            audio_bench::log(label);
+            constexpr auto n = size_t{100000};
+            auto bases = Range::make<float>({base_lo, base_hi, n});
+            auto exps = Range::make<float>({exp_lo, exp_hi, n});
+            auto errors = Tracker<float>{};
+            for (auto i = size_t{}; i < n; ++i) {
+                const auto b = bases[i];
+                const auto e = exps[i];
+                const auto v = vsl::pow<vsl::Precision::Fast>(vsl::float32x4{b}, vsl::float32x4{e});
+                const auto s = static_cast<float>(std::pow(double{b}, double{e}));
+                audio_bench::expect_close(v[0], s, Error::Relative{1e-5f}, std::format("Fail pow<Fast>({}, {})", b, e));
+                errors.update_with(e, v[0], s);
+            }
+            errors.report();
+        };
+
+        constexpr auto e = std::numbers::e_v<float>;
+        run("base 10, exp -10..10", 10, 10, -10, 10);
+        run("base e, exp -20..20", e, e, -20, 20);
+        run("x^2.5, base 0..100", 0.001f, 100, 2.5f, 2.5f);
+        run("base 0.1..0.95, exp -10", 0.1f, 0.95f, -10, -10);
+        run("base 1.05..9, exp 10", 1.05f, 9, 10, 10);
+    });
+
     Tests::add("Test vsl::sqrt.", []() {
         audio_bench::log("Starting Test vsl::sqrt.");
         auto xs = Range::make<float>({0, 100, 100000});
@@ -493,7 +633,7 @@ auto test_math() -> void
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-5f}, std::format("Fail cosh({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail cosh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2}, std::format("Fail cosh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{2 * slack}, std::format("Fail cosh({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -524,10 +664,13 @@ auto test_math() -> void
             const auto v = vsl::tanh(vsl::float32x4{x});
             const auto s = std::tanh(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f * slack}, std::format("Fail tanh({})", x));
             audio_bench::expect_close(v[0], s, Error::Relative{2e-6f}, std::format("Fail tanh({})", x));
             audio_bench::expect_close(v[0], s, Error::Ulp_distance{17}, std::format("Fail tanh({})", x));
             errors.update_with(x, v[0], s);
+
+            const auto f = vsl::tanh<vsl::Precision::Fast>(vsl::float32x4{x});
+            audio_bench::expect_close(f[0], s, Error::Absolute{8e-5f}, std::format("Fail tanh<Fast>({})", x));
         }
         errors.report();
     });
@@ -575,9 +718,25 @@ auto test_math() -> void
         expect("log2", [](auto x) { return vsl::log2(x); }, 0.f, log2_zero);
         expect("log", [](auto x) { return vsl::log(x); }, 0.f, std::numbers::ln2_v<float> * log2_zero);
         expect("log10", [](auto x) { return vsl::log10(x); }, 0.f, std::numbers::ln2_v<float> / std::numbers::ln10_v<float> * log2_zero);
+#if VSL_FINITE_MATH
+        audio_bench::expect_true(vsl::log2(1e-40f) < -149.f, "Fail log2(subnormal)"); // -150 + u P(u)
+#else
+        expect("log2", [](auto x) { return vsl::log2(x); }, 1e-40f, log2_zero); // subnormal reads as 0
+#endif
+        expect("gain_to_db", [](auto x) { return vsl::gain_to_db(x); }, 0.f, 6.0205999132796239f * log2_zero);
+
+        const auto expm1 = [](auto x) { return vsl::expm1(x); };
+        for (auto x : {88.8f, 100.f, 1e30f}) { expect_overflow("expm1", expm1, x); }
+        for (auto x : {-20.f, -100.f, -1e30f}) { expect("expm1", expm1, x, -1.f); }
+        for (auto x : {1e-20f, -1e-20f, 1e-30f}) {
+            audio_bench::expect_close(vsl::expm1(x), x, Error::Ulp_distance{1}, std::format("Fail expm1({})", x));
+        }
+        expect("db_to_gain", [](auto x) { return vsl::db_to_gain(x); }, -1e30f, 0.f);
 
         const auto tanh = [](auto x) { return vsl::tanh(x); };
-        for (auto x : {10.f, 600.f, 1e5f, 1e30f}) { expect("tanh", tanh, x, 1.f); expect("tanh", tanh, -x, -1.f); }
+        if constexpr (!fast_math_estimates) { // saturating at exactly 1 depends on sqrt rounding correctly
+            for (auto x : {10.f, 600.f, 1e5f, 1e30f}) { expect("tanh", tanh, x, 1.f); expect("tanh", tanh, -x, -1.f); }
+        }
 
         const auto sinh = [](auto x) { return vsl::sinh(x); };
         for (auto x : {1e-7f, -1e-7f, 1e-20f}) { expect("sinh", sinh, x, x); }
@@ -592,6 +751,27 @@ auto test_math() -> void
         audio_bench::expect_true(pow0(0.f) == 1.f, "Fail pow(0, 0)");
         audio_bench::expect_true(pow0(-1.f) == huge, "Fail pow(0, -1)");
         audio_bench::expect_true(pow0(2.f) == 0.f, "Fail pow(0, 2)");
+
+        // Both tiers give the same results at 0, the clamps and overflow.
+        const auto tier = [&]<vsl::Precision P>(std::integral_constant<vsl::Precision, P>) {
+            const auto exp2 = [](auto x) { return vsl::exp2<P>(x); };
+            for (auto x : {128.f, 1e30f}) { expect_overflow("exp2", exp2, x); }
+            for (auto x : {-127.f, -1e30f}) { expect("exp2", exp2, x, 0.f); }
+            expect("exp2", exp2, 0.f, 1.f);
+            expect("exp", [](auto x) { return vsl::exp<P>(x); }, 0.f, 1.f);
+            expect_overflow("exp", [](auto x) { return vsl::exp<P>(x); }, 88.8f);
+            expect("db_to_gain", [](auto x) { return vsl::db_to_gain<P>(x); }, 0.f, 1.f);
+            expect("log2", [](auto x) { return vsl::log2<P>(x); }, 1.f, 0.f);
+            expect("log2", [](auto x) { return vsl::log2<P>(x); }, 0.f, log2_zero);
+            expect("gain_to_db", [](auto x) { return vsl::gain_to_db<P>(x); }, 1.f, 0.f);
+            for (auto x : {0.f, 0.5f, 1.f}) { expect("sin_2pi", [](auto x) { return vsl::sin_2pi<P>(x); }, x, 0.f); }
+            expect("tan_pi", [](auto x) { return vsl::tan_pi<P>(x); }, 0.f, 0.f);
+            for (auto x : {0.5f, 2.f, 1e10f}) {
+                expect("pow(x, 0)", [](auto x) { return vsl::pow<P>(x, decltype(x){0.f}); }, x, 1.f);
+            }
+        };
+        tier(std::integral_constant<vsl::Precision, vsl::Precision::Standard>{});
+        tier(std::integral_constant<vsl::Precision, vsl::Precision::Fast>{});
 
 #if !VSL_FINITE_MATH
         constexpr auto inf = std::numeric_limits<float>::infinity();
@@ -655,11 +835,11 @@ static_assert(vsl::rel_equal(vsl::pow(2.f, 0.5f), std::numbers::sqrt2_v<float>, 
 // polynomials carry ~1e-7..1e-6 of error, so use a tolerance in line with the
 // runtime math tests rather than abs_equal's tight default.
 constexpr auto poly_tol = 1e-6f;
-static_assert(abs_equal(vsl::cos<true>(0.f), 1.f, poly_tol));
-static_assert(abs_equal(vsl::sin<true>(0.f), 0.f, poly_tol));
-static_assert(abs_equal(vsl::tan<false>(0.f), 0.f, poly_tol));
-static_assert(abs_equal(vsl::cos_2pi<true>(0.f), 1.f, poly_tol));
-static_assert(abs_equal(vsl::sin_2pi<true>(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::cos(0.f), 1.f, poly_tol));
+static_assert(abs_equal(vsl::sin(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::kernel::tan(0.f), 0.f, poly_tol));
+static_assert(abs_equal(vsl::cos_2pi(0.f), 1.f, poly_tol));
+static_assert(abs_equal(vsl::sin_2pi(0.f), 0.f, poly_tol));
 static_assert(abs_equal(vsl::acos(1.f), 0.f, poly_tol));
 static_assert(abs_equal(vsl::asin(0.f), 0.f, poly_tol));
 static_assert(abs_equal(vsl::atan(1.f), std::numbers::pi_v<float> / 4.f, poly_tol));
@@ -669,7 +849,7 @@ static_assert(abs_equal(vsl::tanh(0.f), 0.f, poly_tol));
 
 // A realistic DSP constant computed entirely at compile time:
 // bilinear-transform pre-warp gain for a 1 kHz cutoff at 48 kHz, tan(pi/48).
-constexpr auto g = vsl::tan<true>(std::numbers::pi_v<float> * 1000.f / 48000.f);
+constexpr auto g = vsl::tan(std::numbers::pi_v<float> * 1000.f / 48000.f);
 static_assert(abs_equal(g, 0.0655434f, 1e-5f));
 
 } // namespace constexpr_checks

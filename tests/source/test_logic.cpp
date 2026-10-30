@@ -13,9 +13,6 @@ auto test_logic(const std::string& name) -> void
     using V = vsl::vector_t<F>;
     constexpr auto N = vsl::num_members_v<V>;
 
-    const auto inf = std::numeric_limits<F>::infinity();
-    const auto nan = std::numeric_limits<F>::quiet_NaN();
-
     // Build a vector with the given lanes, ignoring the extra args on 2-lane types.
     auto make = [](F a, F b, F c, F d) -> V {
         (void)c;
@@ -40,7 +37,12 @@ auto test_logic(const std::string& name) -> void
         audio_bench::expect_true(!vsl::all_unique(make(1, 1, 2, 3)), "duplicate lane breaks uniqueness");
     });
 
+    // Infinities and NaN are UB under -ffinite-math-only (VSL_FINITE_MATH), so this can't run there.
+#if !VSL_FINITE_MATH
     Tests::add("logic - all_finite (" + name + ")", [=]() {
+        const auto inf = std::numeric_limits<F>::infinity();
+        const auto nan = std::numeric_limits<F>::quiet_NaN();
+
         audio_bench::expect_true(vsl::all_finite(F{1}), "scalar finite");
         audio_bench::expect_true(!vsl::all_finite(inf), "scalar +inf not finite");
         audio_bench::expect_true(!vsl::all_finite(-inf), "scalar -inf not finite");
@@ -50,6 +52,7 @@ auto test_logic(const std::string& name) -> void
         audio_bench::expect_true(!vsl::all_finite(make(1, inf, 2, 3)), "one inf lane breaks finite");
         audio_bench::expect_true(!vsl::all_finite(make(1, nan, 2, 3)), "one NaN lane breaks finite");
     });
+#endif
 
     Tests::add("logic - abs_equal (" + name + ")", [=]() {
         // Boundary either side of the default 1e-7 tolerance.

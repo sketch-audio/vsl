@@ -14,7 +14,7 @@ A header-only C++20 SIMD-compatible math library.
 
 const auto x0 = vsl::float32x4{1.f}; // All lanes contain 1.f.
 const auto x1 = vsl::float32x4{1.f, 2.f, 3.f, 4.f};
-const auto y = vsl::sin<false>(x0); // Wrapping not required here.
+const auto y = vsl::sin(x0);
 const auto z = vsl::tanh(x1);
 const auto s = vsl::exp(2.); // Scalar works too.
 ```
@@ -73,33 +73,62 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 
 ## Math
 
-`vsl_math.hpp` provides transcendental and rounding functions, all templated on the float type:
+`vsl_math.hpp` provides transcendental and rounding functions, all templated on the float type.
+
+The transcendental functions take an optional `Precision` first, so the float type is still deduced:
+
+```cpp
+const auto y = vsl::tanh(x);                         // Precision::Standard
+const auto f = vsl::tanh<vsl::Precision::Fast>(x);
+```
+
+`Fast` only differs from `Standard` where it's measurably cheaper and stays inaudible; elsewhere the two are the same. Both give the same results at 0, the clamps and overflow. Measured on an M2 (cost saved is per sample, scalar and `float32x4`):
+
+| `Fast` | Accuracy | Saves |
+|---|---|---|
+| `tanh` | -83 dB, saturates at 0.99993 | ~20% |
+| `tan_pi`, `kernel::tan_pi` | 7.6e-5 relative up to 20 kHz at 48 kHz | 15–25% |
+| `sin_2pi`, `kernel::sin_2pi` | 4.7 ULP | 10–20% |
+| `exp2`, `exp` (and `db_to_gain`, `cosh`, `sinh`) | 2.7 / 3.3 ULP, exactly 1 at 0 | 5–25% |
+| `log2`, `log`, `log10`, `gain_to_db` | 21 ULP (1.5e-6 relative, 2.5e-5 dB) | 12–20% |
+| `pow` | 1e-5 relative | ~15% |
 
 | Function | Notes |
 |---|---|
 | `abs` | |
-| `sqrt`, `rsqrt` | `rsqrt` uses native reciprocal square root instruction |
+| `sqrt`, `rsqrt` | `rsqrt` is `1 / sqrt` on every backend |
+| `rsqrt_estimate` | The hardware estimate: ~8 bits on NEON, ~12 on SSE |
 | `trunc`, `floor`, `ceil`, `round` | |
+| `rint` | Round to nearest, ties to even: one instruction on both backends |
 | `fmod(x, y)` | |
 | `wrap(x)` | Normalize to [0, 1] |
 | `wrap(x, k)` | Symmetric wrap to [-k, k] |
 | `wrap(x, a, b)` | Arbitrary range wrap |
 | `min`, `max`, `clamp` | NaN `x` returns the bound on every backend |
 | `smooth_max(a, b, c)` | Smooth max of `a`, `b` with parameter `c` |
-| `fma(a, b, c)` | Fused multiply-add (`a*b + c`, single rounding) |
+| `mul_add(a, b, c)` | `a * b + c`, fused where the target has it (NEON; x86 built with FMA or AVX2). No single-rounding guarantee |
 | `sign` | |
-| `cos<needs_wrap>(x)`, `sin<needs_wrap>(x)`, `tan<needs_wrap>(x)` | Template parameter suppresses range reduction when input is already reduced |
-| `cos_2pi<needs_wrap>(x)`, `sin_2pi<needs_wrap>(x)`, `tan_pi<needs_wrap>(x)` | Input in cycles [0, 1] |
+| `sin(x)`, `cos(x)`, `tan(x)` | Every float. Relative accuracy holds near zeros and poles for \|x\| up to ~1e2, absolute (~3e-7) to ~1e4; 0 for \|x\| ≥ 2^24 |
+| `sin_2pi(x)`, `cos_2pi(x)`, `tan_pi(x)` | Turns: every float, exact reduction. `tan_pi<Fast>`: 0.07 cents up to 20 kHz at 48 kHz |
+| `sin_cos_2pi(x)` | `{sin, cos}` of 2πx with one reduction |
+| `kernel::sin`, `kernel::cos` ([-π, π]), `kernel::tan` ([-π/2, π/2]) | No reduction: for arguments already in range. About half the cost of the radians functions |
+| `kernel::sin_2pi`, `kernel::cos_2pi` ([0, 1]), `kernel::tan_pi` ([-1/2, 1/2]) | No reduction: a phase in [0, 1), or `fc / fs` |
+| `reduce_turns(x)` | `x - round(x)`: exact, in [-1/2, 1/2] |
+| `reduce_pi(x)` | `{r, n}` with `x = n π + r`, `r` in [-π/2, π/2] |
 | `acos(x)`, `asin(x)`, `atan(x)` | |
 | `exp(x)`, `exp2(x)` | `inf` on overflow, `0` below the smallest normal |
+| `expm1(x)` | `e^x - 1`, accurate near 0 (one-pole coefficients at low cutoffs) |
+| `db_to_gain(db)`, `gain_to_db(gain)` | Exactly 1 at 0 dB and back; -inf dB ↔ 0; ~1e-5 dB |
 | `log(x)`, `log2(x)`, `log10(x)` | Requires x >= 0; `log2(0)` is `-inf` |
 | `logB(b, x)` | Arbitrary-base logarithm |
 | `pow(x, y)` | Requires x >= 0; `pow(0, 0)` is 1, `pow(0, y < 0)` is `inf` |
-| `cosh(x)`, `sinh(x)`, `tanh(x)` | `tanh` is finite for every input and saturates at exactly ±1 |
+| `cosh(x)`, `sinh(x)`, `tanh(x)` | `tanh` is finite for every input; Standard: -120 dB, saturates at exactly ±1. Fast: -83 dB |
 
-Subnormals behave as under flush-to-zero: results never come out subnormal, and subnormal inputs to `log2` are only handled under DAZ (where they read as 0). Under `-ffast-math` (strictly, `-ffinite-math-only`), where infinities are undefined behaviour, overflow saturates to the largest finite value and `log2(0)` is -150 instead.
+Subnormals behave as under flush-to-zero: results never come out subnormal, and `log2` treats subnormal inputs as 0. Under `-ffast-math` (strictly, `-ffinite-math-only`), where infinities are undefined behaviour, overflow saturates to the largest finite value and `log2(0)` is -150 instead. With clang, VSL's headers opt out of reassociation, so its results hold under `-ffast-math` (on x86, clang's reciprocal estimates for division and square root can still cost ~1 ULP); your own code keeps fast math. With GCC and MSVC, expect a few ULP where the compiler reassociates.
 
-Approximation coefficients were derived by Claude (Anthropic) using Python scripts in `work/`, following the Chebyshev fitting technique described at https://mooooo.ooo/chebyshev-sine-approximation/. Each script fits the approximant on a reduced domain, evaluates f32 ULP error, and emits the Horner-form C++ coefficients. Accuracy is verified by the test suite.
+`double` and `float64x2` use the float kernels: about 1e-7 relative error, the same as `float`. Use `std::` where you need full double precision.
+
+Approximation coefficients were derived by Claude (Anthropic) using Python scripts in `work/`, following the Chebyshev fitting technique described at https://mooooo.ooo/chebyshev-sine-approximation/ (`tanh` uses a weighted Remez fit and a Padé approximant, `work/remez_tanh.py`). Each script fits the approximant on a reduced domain, evaluates f32 ULP error, and emits the Horner-form C++ coefficients; scripts with a `Fast` set take its degree as an argument (`python3 work/cheb_log2.py 6`), and the header names the script and degree beside each set. Accuracy is verified by the test suite (`accuracy 1` checks every float).
 
 ## Random number generation
 
@@ -135,6 +164,8 @@ cmake --build build
 ./build/tests/tests
 ./build/bench/bench
 ```
+
+`tests/accuracy` checks every math function against double truth on every 64th float, with one bound per function that every backend must meet; `./build/tests/accuracy 1` checks every float (a few minutes). Under clang, `tests_fast_math` reruns the tests with `-ffast-math`.
 
 Benchmarks use [audio_bench](https://github.com/sketch-audio/audio_bench) and compare vsl against `std::` equivalents.
 

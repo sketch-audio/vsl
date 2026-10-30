@@ -14,6 +14,7 @@ int main()
     bench_explog();
     bench_power();
     bench_hyperbolic();
+    bench_fast();
     std::cout << "\nBenchmarks complete.\n";
     return 0;
 }

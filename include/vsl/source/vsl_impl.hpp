@@ -13,6 +13,11 @@
 #error "No SIMD support detected."
 #endif
 
+// Fused multiply-add only where the build targets it (-mfma, -march=x86-64-v3, /arch:AVX2). No runtime dispatch.
+#if VSL_NEON || defined(__FMA__) || defined(__AVX2__)
+#define VSL_FMA 1
+#endif
+
 #if defined(_MSC_VER)
 #define force_inline inline __forceinline
 #define vector_call __vectorcall
@@ -21,7 +26,40 @@
 #define vector_call
 #endif
 
+// See vsl_math.hpp: keeps -ffast-math from reassociating split constants through these operators.
+// The intrinsics' arithmetic is emitted in the system headers, outside the pragma, so under clang
+// the float operators use the vector types' own operators instead.
+#if defined(__clang__)
+#pragma float_control(push)
+#pragma clang fp reassociate(off)
+#define VSL_VECTOR_OPS 1
+#endif
+
 namespace vsl {
+
+#if VSL_SSE4
+namespace detail {
+
+// SSE float arithmetic. The intrinsics' own arithmetic is emitted in the system headers, outside the
+// pragma above, so under clang it goes through the vector types' operators instead.
+#if VSL_VECTOR_OPS
+force_inline auto vector_call add_ps(__m128 a, __m128 b) -> __m128 { return a + b; }
+force_inline auto vector_call sub_ps(__m128 a, __m128 b) -> __m128 { return a - b; }
+force_inline auto vector_call mul_ps(__m128 a, __m128 b) -> __m128 { return a * b; }
+force_inline auto vector_call add_pd(__m128d a, __m128d b) -> __m128d { return a + b; }
+force_inline auto vector_call sub_pd(__m128d a, __m128d b) -> __m128d { return a - b; }
+force_inline auto vector_call mul_pd(__m128d a, __m128d b) -> __m128d { return a * b; }
+#else
+force_inline auto vector_call add_ps(__m128 a, __m128 b) -> __m128 { return _mm_add_ps(a, b); }
+force_inline auto vector_call sub_ps(__m128 a, __m128 b) -> __m128 { return _mm_sub_ps(a, b); }
+force_inline auto vector_call mul_ps(__m128 a, __m128 b) -> __m128 { return _mm_mul_ps(a, b); }
+force_inline auto vector_call add_pd(__m128d a, __m128d b) -> __m128d { return _mm_add_pd(a, b); }
+force_inline auto vector_call sub_pd(__m128d a, __m128d b) -> __m128d { return _mm_sub_pd(a, b); }
+force_inline auto vector_call mul_pd(__m128d a, __m128d b) -> __m128d { return _mm_mul_pd(a, b); }
+#endif
+
+} // namespace detail
+#endif
 
 // MARK: - mask64x2
 
@@ -251,8 +289,8 @@ private:
         auto xh = _mm_srli_epi64(x, 32);
         xh = _mm_or_si128(xh, _mm_castpd_si128(_mm_set1_pd(19342813113834066795298816.)));
         const auto xl = _mm_blend_epi16(x, _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)), 0xcc);
-        const auto f = _mm_sub_pd(_mm_castsi128_pd(xh), _mm_set1_pd(19342813118337666422669312.));
-        return _mm_add_pd(f, _mm_castsi128_pd(xl));
+        const auto f = detail::sub_pd(_mm_castsi128_pd(xh), _mm_set1_pd(19342813118337666422669312.));
+        return detail::add_pd(f, _mm_castsi128_pd(xl));
 #endif
     }
 
@@ -267,8 +305,8 @@ private:
         xh = _mm_blend_epi16(xh, _mm_setzero_si128(), 0x33);
         xh = _mm_add_epi64(xh, _mm_castpd_si128(_mm_set1_pd(442721857769029238784.)));              //  3*2^67
         const auto xl = _mm_blend_epi16(x, _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)), 0x88);   //  2^52
-        const auto f = _mm_sub_pd(_mm_castsi128_pd(xh), _mm_set1_pd(442726361368656609280.));          //  3*2^67 + 2^52
-        return _mm_add_pd(f, _mm_castsi128_pd(xl));
+        const auto f = detail::sub_pd(_mm_castsi128_pd(xh), _mm_set1_pd(442726361368656609280.));          //  3*2^67 + 2^52
+        return detail::add_pd(f, _mm_castsi128_pd(xl));
 #endif
     }
 
@@ -375,43 +413,53 @@ private:
 
     static force_inline auto vector_call add(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a + b;
+#elif VSL_NEON
         return vaddq_f64(a, b);
 #elif VSL_SSE4
-        return _mm_add_pd(a, b);
+        return detail::add_pd(a, b);
 #endif
     }
 
     static force_inline auto vector_call sub(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a - b;
+#elif VSL_NEON
         return vsubq_f64(a, b);
 #elif VSL_SSE4
-        return _mm_sub_pd(a, b);
+        return detail::sub_pd(a, b);
 #endif
     }
 
     static force_inline auto vector_call mul(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a * b;
+#elif VSL_NEON
         return vmulq_f64(a, b);
 #elif VSL_SSE4
-        return _mm_mul_pd(a, b);
+        return detail::mul_pd(a, b);
 #endif
     }
 
-    static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
+    static force_inline auto vector_call mul_add(Vector a, Vector b, Vector c) -> Vector
     {
 #if VSL_NEON
         return vfmaq_f64(c, a, b);
+#elif VSL_FMA
+        return _mm_fmadd_pd(a, b, c);
 #elif VSL_SSE4
-        return _mm_add_pd(_mm_mul_pd(a, b), c);
+        return detail::add_pd(detail::mul_pd(a, b), c);
 #endif
     }
 
     static force_inline auto vector_call div(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a / b;
+#elif VSL_NEON
         return vdivq_f64(a, b);
 #elif VSL_SSE4
         return _mm_div_pd(a, b);
@@ -513,7 +561,7 @@ private:
         // See: https://stackoverflow.com/questions/41144668/
         // Only works for inputs in the range: [-2^51, 2^51]
         x = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
-        x = _mm_add_pd(x, _mm_set1_pd(0x0018000000000000));
+        x = detail::add_pd(x, _mm_set1_pd(0x0018000000000000));
         return _mm_sub_epi64(_mm_castpd_si128(x), _mm_castpd_si128(_mm_set1_pd(0x0018000000000000)));
 #endif
     }
@@ -527,7 +575,7 @@ private:
         // See: https://stackoverflow.com/questions/41144668/
         // Only works for inputs in the range: [0, 2^52]
         x = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
-        x = _mm_add_pd(x, _mm_set1_pd(0x0010000000000000));
+        x = detail::add_pd(x, _mm_set1_pd(0x0010000000000000));
         return _mm_sub_epi64(_mm_castpd_si128(x), _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)));
 #endif
     }
@@ -559,6 +607,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call rint(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndnq_f64(x); // ties to even (FRINTN)
+#elif VSL_SSE4
+        return _mm_round_pd(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+#endif
+    }
+
     static force_inline auto vector_call round(Vector x) -> Vector
     {
 #if VSL_NEON
@@ -568,10 +625,10 @@ private:
         // trunc plus a copysign(1) bump when the (exact) fractional part is >= 0.5.
         const auto sign_mask = _mm_set1_pd(-0.0);
         const auto tz = _mm_round_pd(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC); // toward zero
-        const auto frac = _mm_andnot_pd(sign_mask, _mm_sub_pd(x, tz)); // |x - trunc(x)|
+        const auto frac = _mm_andnot_pd(sign_mask, detail::sub_pd(x, tz)); // |x - trunc(x)|
         const auto bump = _mm_or_pd(_mm_and_pd(x, sign_mask), _mm_set1_pd(1.0)); // copysign(1, x)
         const auto ge_half = _mm_cmpge_pd(frac, _mm_set1_pd(0.5));
-        return _mm_add_pd(tz, _mm_and_pd(ge_half, bump));
+        return detail::add_pd(tz, _mm_and_pd(ge_half, bump));
 #endif
     }
 
@@ -593,7 +650,7 @@ private:
 #endif
     }
 
-    static force_inline auto vector_call rsqrt(Vector x) -> Vector
+    static force_inline auto vector_call rsqrt_estimate(Vector x) -> Vector
     {
 #if VSL_NEON
         return vrsqrteq_f64(x);
@@ -658,13 +715,14 @@ public:
     static force_inline auto vector_call floor(float64x2 x) noexcept -> float64x2 { return floor(x.data); }
     static force_inline auto vector_call ceil(float64x2 x) noexcept -> float64x2 { return ceil(x.data); }
     static force_inline auto vector_call round(float64x2 x) noexcept -> float64x2 { return round(x.data); }
+    static force_inline auto vector_call rint(float64x2 x) noexcept -> float64x2 { return rint(x.data); }
     static force_inline auto vector_call abs(float64x2 x) noexcept -> float64x2 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float64x2 x) noexcept -> float64x2 { return sqrt(x.data); }
-    static force_inline auto vector_call rsqrt(float64x2 x) noexcept -> float64x2 { return rsqrt(x.data); }
+    static force_inline auto vector_call rsqrt_estimate(float64x2 x) noexcept -> float64x2 { return rsqrt_estimate(x.data); }
     static force_inline auto vector_call min(float64x2 a, float64x2 b) noexcept -> float64x2 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float64x2 a, float64x2 b) noexcept -> float64x2 { return max(a.data, b.data); }
-    static force_inline auto vector_call fma(float64x2 a, float64x2 b, float64x2 c) noexcept -> float64x2 { return fma(a.data, b.data, c.data); }
+    static force_inline auto vector_call mul_add(float64x2 a, float64x2 b, float64x2 c) noexcept -> float64x2 { return mul_add(a.data, b.data, c.data); }
 
 };
 
@@ -889,7 +947,7 @@ private:
         const auto x1 = _mm_and_si128(x, _mm_set1_epi32(1));
         const auto x2f = _mm_cvtepi32_ps(x2);
         const auto x1f = _mm_cvtepi32_ps(x1);
-        return _mm_add_ps(_mm_add_ps(x2f, x2f), x1f);
+        return detail::add_ps(detail::add_ps(x2f, x2f), x1f);
 #endif
     }
 
@@ -1010,43 +1068,53 @@ private:
 
     static force_inline auto vector_call add(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a + b;
+#elif VSL_NEON
         return vaddq_f32(a, b);
 #elif VSL_SSE4
-        return _mm_add_ps(a, b);
+        return detail::add_ps(a, b);
 #endif
     }
 
     static force_inline auto vector_call sub(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a - b;
+#elif VSL_NEON
         return vsubq_f32(a, b);
 #elif VSL_SSE4
-        return _mm_sub_ps(a, b);
+        return detail::sub_ps(a, b);
 #endif
     }
 
     static force_inline auto vector_call mul(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a * b;
+#elif VSL_NEON
         return vmulq_f32(a, b);
 #elif VSL_SSE4
-        return _mm_mul_ps(a, b);
+        return detail::mul_ps(a, b);
 #endif
     }
 
-    static force_inline auto vector_call fma(Vector a, Vector b, Vector c) -> Vector
+    static force_inline auto vector_call mul_add(Vector a, Vector b, Vector c) -> Vector
     {
 #if VSL_NEON
         return vfmaq_f32(c, a, b);
+#elif VSL_FMA
+        return _mm_fmadd_ps(a, b, c);
 #elif VSL_SSE4
-        return _mm_add_ps(_mm_mul_ps(a, b), c);
+        return detail::add_ps(detail::mul_ps(a, b), c);
 #endif
     }
 
     static force_inline auto vector_call div(Vector a, Vector b) -> Vector
     {
-#if VSL_NEON
+#if VSL_VECTOR_OPS
+        return a / b;
+#elif VSL_NEON
         return vdivq_f32(a, b);
 #elif VSL_SSE4
         return _mm_div_ps(a, b);
@@ -1186,6 +1254,15 @@ private:
 #endif
     }
 
+    static force_inline auto vector_call rint(Vector x) -> Vector
+    {
+#if VSL_NEON
+        return vrndnq_f32(x); // ties to even (FRINTN)
+#elif VSL_SSE4
+        return _mm_round_ps(x, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+#endif
+    }
+
     static force_inline auto vector_call round(Vector x) -> Vector
     {
 #if VSL_NEON
@@ -1195,10 +1272,10 @@ private:
         // trunc plus a copysign(1) bump when the (exact) fractional part is >= 0.5.
         const auto sign_mask = _mm_set1_ps(-0.0f);
         const auto tz = _mm_round_ps(x, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC); // toward zero
-        const auto frac = _mm_andnot_ps(sign_mask, _mm_sub_ps(x, tz)); // |x - trunc(x)|
+        const auto frac = _mm_andnot_ps(sign_mask, detail::sub_ps(x, tz)); // |x - trunc(x)|
         const auto bump = _mm_or_ps(_mm_and_ps(x, sign_mask), _mm_set1_ps(1.0f)); // copysign(1, x)
         const auto ge_half = _mm_cmpge_ps(frac, _mm_set1_ps(0.5f));
-        return _mm_add_ps(tz, _mm_and_ps(ge_half, bump));
+        return detail::add_ps(tz, _mm_and_ps(ge_half, bump));
 #endif
     }
 
@@ -1220,7 +1297,7 @@ private:
 #endif
     }
 
-    static force_inline auto vector_call rsqrt(Vector x) -> Vector
+    static force_inline auto vector_call rsqrt_estimate(Vector x) -> Vector
     {
 #if VSL_NEON
         return vrsqrteq_f32(x);
@@ -1285,14 +1362,19 @@ public:
     static force_inline auto vector_call floor(float32x4 x) noexcept -> float32x4 { return floor(x.data); }
     static force_inline auto vector_call ceil(float32x4 x) noexcept -> float32x4 { return ceil(x.data); }
     static force_inline auto vector_call round(float32x4 x) noexcept -> float32x4 { return round(x.data); }
+    static force_inline auto vector_call rint(float32x4 x) noexcept -> float32x4 { return rint(x.data); }
     static force_inline auto vector_call abs(float32x4 x) noexcept -> float32x4 { return abs(x.data); }
 
     static force_inline auto vector_call sqrt(float32x4 x) noexcept -> float32x4 { return sqrt(x.data); }
-    static force_inline auto vector_call rsqrt(float32x4 x) noexcept -> float32x4 { return rsqrt(x.data); }
+    static force_inline auto vector_call rsqrt_estimate(float32x4 x) noexcept -> float32x4 { return rsqrt_estimate(x.data); }
     static force_inline auto vector_call min(float32x4 a, float32x4 b) noexcept -> float32x4 { return min(a.data, b.data); }
     static force_inline auto vector_call max(float32x4 a, float32x4 b) noexcept -> float32x4 { return max(a.data, b.data); }
-    static force_inline auto vector_call fma(float32x4 a, float32x4 b, float32x4 c) noexcept -> float32x4 { return fma(a.data, b.data, c.data); }
+    static force_inline auto vector_call mul_add(float32x4 a, float32x4 b, float32x4 c) noexcept -> float32x4 { return mul_add(a.data, b.data, c.data); }
 
 };
 
 } // namespace vsl
+
+#if defined(__clang__)
+#pragma float_control(pop)
+#endif
