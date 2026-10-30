@@ -509,8 +509,8 @@ auto test_math() -> void
             const auto s = std::sinh(x);
             audio_bench::expect_true(vsl::all_same(v));
             audio_bench::expect_close(v[0], s, Error::Absolute{2e-5f}, std::format("Fail sinh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{2e-3f}, std::format("Fail sinh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Ulp_distance{18527}, std::format("Fail sinh({})", x)); // ...
+            audio_bench::expect_close(v[0], s, Error::Relative{3e-7f}, std::format("Fail sinh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{3}, std::format("Fail sinh({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
@@ -524,12 +524,92 @@ auto test_math() -> void
             const auto v = vsl::tanh(vsl::float32x4{x});
             const auto s = std::tanh(x);
             audio_bench::expect_true(vsl::all_same(v));
-            audio_bench::expect_close(v[0], s, Error::Absolute{4e-3f}, std::format("Fail tanh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Relative{4e-3f}, std::format("Fail tanh({})", x));
-            audio_bench::expect_close(v[0], s, Error::Ulp_distance{53596}, std::format("Fail tanh({})", x)); // ...
+            audio_bench::expect_close(v[0], s, Error::Absolute{1e-6f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Relative{2e-6f}, std::format("Fail tanh({})", x));
+            audio_bench::expect_close(v[0], s, Error::Ulp_distance{17}, std::format("Fail tanh({})", x));
             errors.update_with(x, v[0], s);
         }
         errors.report();
+    });
+
+    // MARK: - edges
+
+    Tests::add("Test vsl edge values.", []() {
+        // Under VSL_FINITE_MATH (-ffast-math), infinities and NaN are UB: overflow saturates instead.
+#if VSL_FINITE_MATH
+        constexpr auto huge = std::numeric_limits<float>::max();
+        constexpr auto log2_zero = -150.f;
+#else
+        constexpr auto huge = std::numeric_limits<float>::infinity();
+        constexpr auto log2_zero = -huge;
+#endif
+
+        // Scalar and vector must agree with each other and with the expected value.
+        auto expect = [](const char* name, auto f, float x, float expected) {
+            const auto s = f(x);
+            const auto v = f(vsl::float32x4{x});
+            audio_bench::expect_true(vsl::all_same(v), std::format("Fail {}({}) lanes", name, x));
+            audio_bench::expect_true(s == expected, std::format("Fail {}({}) scalar: got {}, want {}", name, x, s, expected));
+            audio_bench::expect_true(v[0] == expected, std::format("Fail {}({}) vector: got {}, want {}", name, x, v[0], expected));
+        };
+        // Saturated overflow is FLT_MAX give or take a little under VSL_FINITE_MATH.
+        auto expect_overflow = [](const char* name, auto f, float x) {
+            const auto s = f(x);
+            const auto v = f(vsl::float32x4{x});
+            audio_bench::expect_true(vsl::all_same(v) && s == v[0], std::format("Fail {}({}) scalar != vector", name, x));
+#if VSL_FINITE_MATH
+            audio_bench::expect_true(s > 3.4e38f, std::format("Fail {}({}): got {}, want ~FLT_MAX", name, x, s));
+#else
+            audio_bench::expect_true(s == std::numeric_limits<float>::infinity(), std::format("Fail {}({}): got {}, want inf", name, x, s));
+#endif
+        };
+
+        const auto exp2 = [](auto x) { return vsl::exp2(x); };
+        for (auto x : {128.f, 200.f, 256.f, 1e30f}) { expect_overflow("exp2", exp2, x); }
+        for (auto x : {-127.f, -200.f, -1e30f}) { expect("exp2", exp2, x, 0.f); }
+
+        const auto exp = [](auto x) { return vsl::exp(x); };
+        for (auto x : {88.8f, 100.f, 178.f, 1e30f}) { expect_overflow("exp", exp, x); }
+        for (auto x : {-88.f, -100.f, -1e30f}) { expect("exp", exp, x, 0.f); }
+
+        expect("log2", [](auto x) { return vsl::log2(x); }, 0.f, log2_zero);
+        expect("log", [](auto x) { return vsl::log(x); }, 0.f, std::numbers::ln2_v<float> * log2_zero);
+        expect("log10", [](auto x) { return vsl::log10(x); }, 0.f, std::numbers::ln2_v<float> / std::numbers::ln10_v<float> * log2_zero);
+
+        const auto tanh = [](auto x) { return vsl::tanh(x); };
+        for (auto x : {10.f, 600.f, 1e5f, 1e30f}) { expect("tanh", tanh, x, 1.f); expect("tanh", tanh, -x, -1.f); }
+
+        const auto sinh = [](auto x) { return vsl::sinh(x); };
+        for (auto x : {1e-7f, -1e-7f, 1e-20f}) { expect("sinh", sinh, x, x); }
+
+        using vsl::float32x4;
+        const auto pow0 = [](float y) {
+            const auto s = vsl::pow(0.f, y);
+            const auto v = vsl::pow(float32x4{0.f}, float32x4{y});
+            audio_bench::expect_true(s == v[0], std::format("Fail pow(0, {}) scalar != vector", y));
+            return s;
+        };
+        audio_bench::expect_true(pow0(0.f) == 1.f, "Fail pow(0, 0)");
+        audio_bench::expect_true(pow0(-1.f) == huge, "Fail pow(0, -1)");
+        audio_bench::expect_true(pow0(2.f) == 0.f, "Fail pow(0, 2)");
+
+#if !VSL_FINITE_MATH
+        constexpr auto inf = std::numeric_limits<float>::infinity();
+        constexpr auto nan = std::numeric_limits<float>::quiet_NaN();
+        expect("exp2", exp2, inf, inf);
+        expect("exp2", exp2, -inf, 0.f);
+        expect("tanh", tanh, inf, 1.f);
+        expect("tanh", tanh, -inf, -1.f);
+
+        // NaN in: the bound out, on every backend.
+        expect("clamp", [](auto x) { return vsl::clamp(x, 0.f, 1.f); }, nan, 0.f);
+        expect("min", [](auto x) { return vsl::min(x, 1.f); }, nan, 1.f);
+        expect("max", [](auto x) { return vsl::max(x, 1.f); }, nan, 1.f);
+
+        // The exp2 clamp follows the type's exponent range.
+        audio_bench::expect_true(vsl::exp2(200.0) == std::exp2(200.0), "Fail exp2(200.0) double");
+        audio_bench::expect_true(vsl::exp2(vsl::float64x2{1024.0})[0] == std::numeric_limits<double>::infinity(), "Fail exp2(1024.0) double");
+#endif
     });
 }
 

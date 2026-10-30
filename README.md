@@ -84,18 +84,20 @@ Concepts: `Scalar`, `Vector`, `Integral`, `Floating_point`.
 | `wrap(x)` | Normalize to [0, 1] |
 | `wrap(x, k)` | Symmetric wrap to [-k, k] |
 | `wrap(x, a, b)` | Arbitrary range wrap |
-| `min`, `max`, `clamp` | |
+| `min`, `max`, `clamp` | NaN `x` returns the bound on every backend |
 | `smooth_max(a, b, c)` | Smooth max of `a`, `b` with parameter `c` |
 | `fma(a, b, c)` | Fused multiply-add (`a*b + c`, single rounding) |
 | `sign` | |
 | `cos<needs_wrap>(x)`, `sin<needs_wrap>(x)`, `tan<needs_wrap>(x)` | Template parameter suppresses range reduction when input is already reduced |
 | `cos_2pi<needs_wrap>(x)`, `sin_2pi<needs_wrap>(x)`, `tan_pi<needs_wrap>(x)` | Input in cycles [0, 1] |
 | `acos(x)`, `asin(x)`, `atan(x)` | |
-| `exp(x)`, `exp2(x)` | |
-| `log(x)`, `log2(x)`, `log10(x)` | |
+| `exp(x)`, `exp2(x)` | `inf` on overflow, `0` below the smallest normal |
+| `log(x)`, `log2(x)`, `log10(x)` | Requires x >= 0; `log2(0)` is `-inf` |
 | `logB(b, x)` | Arbitrary-base logarithm |
-| `pow(x, y)` | Requires x >= 0 |
-| `cosh(x)`, `sinh(x)`, `tanh(x)` | |
+| `pow(x, y)` | Requires x >= 0; `pow(0, 0)` is 1, `pow(0, y < 0)` is `inf` |
+| `cosh(x)`, `sinh(x)`, `tanh(x)` | `tanh` is finite for every input and saturates at exactly ±1 |
+
+Subnormals behave as under flush-to-zero: results never come out subnormal, and subnormal inputs to `log2` are only handled under DAZ (where they read as 0). Under `-ffast-math` (strictly, `-ffinite-math-only`), where infinities are undefined behaviour, overflow saturates to the largest finite value and `log2(0)` is -150 instead.
 
 Approximation coefficients were derived by Claude (Anthropic) using Python scripts in `work/`, following the Chebyshev fitting technique described at https://mooooo.ooo/chebyshev-sine-approximation/. Each script fits the approximant on a reduced domain, evaluates f32 ULP error, and emits the Horner-form C++ coefficients. Accuracy is verified by the test suite.
 

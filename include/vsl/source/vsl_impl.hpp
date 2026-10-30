@@ -605,7 +605,7 @@ private:
     static force_inline auto vector_call min(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
-        return vminq_f64(a, b);
+        return vminnmq_f64(a, b);
 #elif VSL_SSE4
         return _mm_min_pd(a, b);
 #endif
@@ -614,7 +614,7 @@ private:
     static force_inline auto vector_call max(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
-        return vmaxq_f64(a, b);
+        return vmaxnmq_f64(a, b);
 #elif VSL_SSE4
         return _mm_max_pd(a, b);
 #endif
@@ -1232,7 +1232,7 @@ private:
     static force_inline auto vector_call min(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
-        return vminq_f32(a, b);
+        return vminnmq_f32(a, b);
 #elif VSL_SSE4
         return _mm_min_ps(a, b);
 #endif
@@ -1241,7 +1241,7 @@ private:
     static force_inline auto vector_call max(Vector a, Vector b) -> Vector
     {
 #if VSL_NEON
-        return vmaxq_f32(a, b);
+        return vmaxnmq_f32(a, b);
 #elif VSL_SSE4
         return _mm_max_ps(a, b);
 #endif

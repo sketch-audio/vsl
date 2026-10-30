@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm> // min, max, clamp
 #include <cassert>
 #include <cmath>
 #include <concepts> // std::floating_point
@@ -10,6 +9,12 @@
 
 #include "vsl_core.hpp"
 #include "vsl_logic.hpp"
+
+// -ffast-math implies -ffinite-math-only, where any infinity is UB, so overflow saturates to finite
+// values instead. MSVC's /fp:fast doesn't make infinities UB, so this stays off there.
+#if defined(__FINITE_MATH_ONLY__) && __FINITE_MATH_ONLY__
+#define VSL_FINITE_MATH 1
+#endif
 
 namespace vsl {
 
@@ -68,9 +73,13 @@ constexpr auto round(F x) -> F
 template<std::floating_point F>
 constexpr auto sqrt(F x) -> F
 {
+#if VSL_FINITE_MATH
+    if (x <= F{0}) { return F{0}; }
+#else
     constexpr auto inf = std::numeric_limits<F>::infinity();
     if (x != x || x == inf || x == F{0}) { return x; } // NaN, +inf, +/-0
     if (x < F{0}) { return std::numeric_limits<F>::quiet_NaN(); }
+#endif
 
     // Reduce x = m * 4^k with m in [1, 4), so sqrt(x) = sqrt(m) * 2^k.
     auto k = int32_t{};
@@ -86,6 +95,17 @@ constexpr auto sqrt(F x) -> F
         g = next;
     }
     return g * two_pow<F>(k);
+}
+
+/// +inf, or the largest finite value under VSL_FINITE_MATH.
+template<std::floating_point F>
+constexpr auto overflow() -> F
+{
+#if VSL_FINITE_MATH
+    return std::numeric_limits<F>::max();
+#else
+    return std::numeric_limits<F>::infinity();
+#endif
 }
 
 } // namespace detail
@@ -171,6 +191,39 @@ force_inline constexpr auto fma(X a, X b, X c) -> X
         return std::fma(a, b, c);
 #endif
     }
+}
+
+// MARK: - min, max, clamp
+
+/// If a is NaN, returns b on every backend. b must not be NaN.
+template<Floating_point X, Floating_point C>
+force_inline constexpr auto min(X a, C b) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return X::min(a, X(b));
+    }
+    else {
+        return a < X(b) ? a : X(b);
+    }
+}
+
+/// If a is NaN, returns b on every backend. b must not be NaN.
+template<Floating_point X, Floating_point C>
+force_inline constexpr auto max(X a, C b) -> X
+{
+    if constexpr (is_vector_v<X>) {
+        return X::max(a, X(b));
+    }
+    else {
+        return a > X(b) ? a : X(b);
+    }
+}
+
+/// If x is NaN, returns a on every backend. pre: a <= b, neither NaN
+template<Floating_point X, Floating_point C>
+force_inline constexpr auto clamp(X x, C a, C b) -> X
+{
+    return min(max(x, a), b);
 }
 
 // MARK: - sqrt
@@ -304,7 +357,7 @@ force_inline constexpr auto sin(X x) -> X
     p = fma(p, x2, X(-1.013211831e-01f));
     const auto lo = (x - pi_major) - pi_minor;  // ~ x - pi (Sterbenz)
     const auto hi = (x + pi_major) + pi_minor;  // ~ x + pi
-    return lo * hi * x * p;
+    return x * (lo * hi * p);
 }
 
 ///
@@ -332,7 +385,7 @@ force_inline constexpr auto tan(X x) -> X
     q = fma(q, x2, X(2.467401028e+00f));
     const auto lo = (pi_half_major - x) + pi_half_minor;  // ~ pi/2 - x (Sterbenz)
     const auto hi = (pi_half_major + x) + pi_half_minor;  // ~ pi/2 + x
-    return x * q / (lo * hi);
+    return x * (q / (lo * hi));
 }
 
 ///
@@ -405,7 +458,7 @@ force_inline constexpr auto tan_pi(X x) -> X
     q = fma(q, x2, X(7.853981853e-01f));
     const auto lo = 0.5f - x;
     const auto hi = 0.5f + x;
-    return x * q / (lo * hi);
+    return x * (q / (lo * hi));
 }
 
 // MARK: - Inverse Trig Functions
@@ -507,6 +560,13 @@ force_inline constexpr auto exp2(X x, X corr) -> X
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
 
+    // bias + 1 builds the all-ones exponent (inf), -bias the zero exponent (0, no subnormals).
+#if VSL_FINITE_MATH
+    constexpr auto x_hi = S(exp_bias + 1) * S(1 - 0x1p-20);
+#else
+    constexpr auto x_hi = S(exp_bias + 1);
+#endif
+    x = vsl::clamp(x, -S(exp_bias), x_hi);
     const auto fl = vsl::floor(x);
     const auto dec_part = (x - fl) + corr; // fl is already integral; no round-trip
     const auto int_part = vsl::float_to_signed(fl);
@@ -521,7 +581,7 @@ force_inline constexpr auto exp2(X x, X corr) -> X
     v = fma(v, dec_part, X(2.402304560e-01f));
     v = fma(v, dec_part, X(6.931469440e-01f));
     v = fma(v, dec_part, X(1.000000000e+00f));
-    return vsl::select(x < S(-126.f), X{}, int_pow * v);
+    return int_pow * v;
 }
 
 } // namespace detail
@@ -533,11 +593,12 @@ force_inline constexpr auto exp2(X x) -> X
     return detail::exp2(x, X{});
 }
 
-/// pre: x > 0
+/// log2(0) = -inf, or -150 (one below the smallest subnormal) under VSL_FINITE_MATH.
+/// Subnormal x is only correct under DAZ, where it compares equal to 0. pre: x >= 0
 template<Floating_point X>
 force_inline constexpr auto log2(X x) -> X
 {
-    assert(all(x > X{0}) && "vsl::log2: x > 0");
+    assert(all(x >= X{0}) && "vsl::log2: x >= 0");
     using S = scalar_t<X>;
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
@@ -566,7 +627,12 @@ force_inline constexpr auto log2(X x) -> X
     p = fma(p, u, X(4.809007943e-01f));
     p = fma(p, u, X(-7.213485241e-01f));
     p = fma(p, u, X(1.442695022e+00f));
-    return e_adj + u * p;
+#if VSL_FINITE_MATH
+    constexpr auto log2_zero = -S(exp_bias + sig_bits);
+#else
+    constexpr auto log2_zero = -std::numeric_limits<S>::infinity();
+#endif
+    return select(x == X{0}, X(log2_zero), e_adj + u * p);
 }
 
 // MARK: - exp, log, pow, etc.
@@ -578,20 +644,29 @@ force_inline constexpr auto exp(X x) -> X
     using S = scalar_t<X>;
 
     constexpr auto ln_2 = std::numbers::ln2_v<S>;
+    constexpr auto log2e = S(std::numbers::log2e_v<double>);
     constexpr auto ln2_hi = S(6.93145752e-01f); // 0x3f317200: 8 trailing zero mantissa bits
     constexpr auto ln2_lo = S(1.42860677e-06f); // ln(2) - ln2_hi
-    const auto n = floor(x / ln_2);
-    const auto r = (x - n * ln2_hi) - n * ln2_lo;
-
     constexpr auto exp_bias = ieee_exp_bias_v<S>;
     constexpr auto sig_bits = ieee_sig_bits_v<S>;
+
+    // n = bias + 1 builds the all-ones exponent (inf), n = -bias the zero exponent (0, no subnormals).
+    constexpr auto x_lo = -(S(exp_bias) - S(0.5f)) * ln_2;
+#if VSL_FINITE_MATH
+    constexpr auto x_hi = S(exp_bias + 1) * S(1 - 0x1p-20) * ln_2;
+#else
+    constexpr auto x_hi = (S(exp_bias) + S(1.5f)) * ln_2;
+#endif
+    x = clamp(x, x_lo, x_hi);
+    const auto n = floor(x * log2e);
+    const auto r = (x - n * ln2_hi) - n * ln2_lo;
+
     const auto arg = signed_to_unsigned(float_to_signed(n));
     const auto bits = (arg + exp_bias) << sig_bits;
     const auto two_pow = reinterpret_as_float(bits);
 
     // exp(r) = exp2(r * log2e), r*log2e in [0, 1) -- reuses the Chebyshev-fitted
     // exp2 polynomial instead of the Taylor coefficients that blow up at r = ln2.
-    constexpr auto log2e = S(std::numbers::log2e_v<double>);
     const auto t = r * log2e;
     auto v = X(2.186578495e-04f);
     v = fma(v, t, X(1.239133184e-03f));
@@ -600,8 +675,7 @@ force_inline constexpr auto exp(X x) -> X
     v = fma(v, t, X(2.402304560e-01f));
     v = fma(v, t, X(6.931469440e-01f));
     v = fma(v, t, X(1.000000000e+00f));
-
-    return select(x < S(-87.34f), X{}, two_pow * v);
+    return two_pow * v;
 }
 
 /// pre: x > 0
@@ -633,18 +707,21 @@ template<Floating_point X>
 force_inline constexpr auto pow(X x, X y) -> X
 {
     assert(all(x >= X{0}) && "vsl::pow: x >= 0");
+    using S = scalar_t<X>;
+    constexpr auto huge = detail::overflow<S>();
     if constexpr (is_vector_v<X>) {
         // FMA plus new split impl gets us down to ~5 ULP.
         const auto is_zero = x == X{0};
         const auto l = log2(select(is_zero, X{1}, x)); // avoid log2(0) on zero lanes
         const auto hi = y * l;
         const auto lo = fma(y, l, -hi);
-        return select(is_zero, X{}, detail::exp2(hi, lo));
+        const auto zero_pow = select(y < X{0}, X(huge), select(y == X{0}, X{1}, X{}));
+        return select(is_zero, zero_pow, detail::exp2(hi, lo));
     }
     else {
         // Widen to double, then round back to float. This gets us down to ~1 ULP.
         using W = double;
-        if (x == X{0}) { return X{0}; }
+        if (x == X{0}) { return y < X{0} ? huge : (y == X{0} ? X{1} : X{0}); }
         const auto l = log2(static_cast<W>(x));
         return static_cast<X>(exp2(l * static_cast<W>(y)));
     }
@@ -652,82 +729,72 @@ force_inline constexpr auto pow(X x, X y) -> X
 
 // MARK: - Hyperbolic Trig Functions
 
+namespace detail {
+
+// Under VSL_FINITE_MATH, keeps exp(-|x|) normal so 1 / (2 b) stays finite.
+template<Floating_point X>
+force_inline constexpr auto hyperbolic_arg(X x) -> X
+{
+#if VSL_FINITE_MATH
+    using S = scalar_t<X>;
+    constexpr auto lim = S(ieee_exp_bias_v<S> - 2) * std::numbers::ln2_v<S>;
+    return vsl::clamp(x, -lim, lim);
+#else
+    return x;
+#endif
+}
+
+} // namespace detail
+
 ///
 template<Floating_point X>
 force_inline constexpr auto cosh(X x) -> X
 {
-    const auto b = exp(x);
+    const auto b = exp(detail::hyperbolic_arg(x));
     const auto br = 1 / (2 * b);
     const auto bh = b / 2;
     return bh + br;
 }
 
-///
+/// Taylor below |x| = 1, where b/2 - 1/(2b) cancels.
 template<Floating_point X>
 force_inline constexpr auto sinh(X x) -> X
 {
-    const auto b = exp(x);
+    const auto b = exp(detail::hyperbolic_arg(x));
     const auto br = 1 / (2 * b);
     const auto bh = b / 2;
-    return bh - br;
+
+    const auto u = x * x;
+    auto p = X(2.755731922e-06f);
+    p = fma(p, u, X(1.984126984e-04f));
+    p = fma(p, u, X(8.333333333e-03f));
+    p = fma(p, u, X(1.666666667e-01f));
+    const auto small = fma(x * u, p, x);
+    return select(abs(x) < 1.f, small, bh - br);
 }
 
-///
+/// tanh rounds to 1 in float past ~9.01, so the clamp is free and s * s can't overflow.
+/// 9.2 lands on exactly 1, fused or not; 9.1 and 9.25 don't.
 template<Floating_point X>
 force_inline constexpr auto tanh(X x) -> X
 {
-    const auto u = x * x;
-    auto r = X(3.292487918e-06f);
-    r = fma(r, u, X(1.962047536e-04f));
-    r = fma(r, u, X(8.333356120e-03f));
-    r = fma(r, u, X(1.666701734e-01f));
-    r = fma(r, u, X(9.999960065e-01f));
-    const auto p = x * r;
-    return p * rsqrt(p * p + 1);
+    const auto xc = clamp(x, -9.2f, 9.2f);
+    const auto u = xc * xc;
+    auto r = X(3.567437808e-06f);
+    r = fma(r, u, X(1.918139418e-04f));
+    r = fma(r, u, X(8.349913590e-03f));
+    r = fma(r, u, X(1.666557794e-01f));
+    r = fma(r, u, X(1.000000829e+00f));
+    const auto s = xc * r;
+    return s / sqrt(fma(s, s, X(1)));
 }
 
 // MARK: - Other
-
-///
-template<Floating_point X, Floating_point C>
-force_inline constexpr auto min(X a, C b) -> X
-{
-    if constexpr (is_vector_v<X>) {
-        return X::min(a, X(b));
-    }
-    else {
-        return std::min(a, X(b));
-    }
-}
-
-///
-template<Floating_point X, Floating_point C>
-force_inline constexpr auto max(X a, C b) -> X
-{
-    if constexpr (is_vector_v<X>) {
-        return X::max(a, X(b));
-    }
-    else {
-        return std::max(a, X(b));
-    }
-}
 
 template<Floating_point X, Floating_point C>
 force_inline constexpr auto smooth_max(X a, X b, C s) -> X
 {
     return X(0.5f) * (a + b + vsl::sqrt((a - b) * (a - b) + X(s)));
-}
-
-///
-template<Floating_point X, Floating_point C>
-force_inline constexpr auto clamp(X x, C a, C b) -> X
-{
-    if constexpr (is_vector_v<X>) {
-        return min(max(x, a), b);
-    }
-    else {
-        return std::clamp(x, X(a), X(b));
-    }
 }
 
 ///
