@@ -9,14 +9,18 @@ Intended for range-reduced exp2 where the caller handles x = k + r with
 r in [0, 1) and multiplies the polynomial by 2^k via ldexp/bit ops.
 """
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import Chebyshev, Polynomial
 
+from remez import remez
+
 A, B = 0.0, 1.0
 MID, HALF = 0.5 * (A + B), 0.5 * (B - A)
 
-DEGREE = 6
+DEGREE = int(sys.argv[1]) if len(sys.argv) > 1 else 6  # Precision::Fast: 5
 cheb = Chebyshev.interpolate(lambda t: np.exp2(MID + HALF * t), DEGREE, domain=[-1, 1])
 
 print("Chebyshev coefficients a_n:")
@@ -31,6 +35,17 @@ result = Polynomial([poly_t.coef[-1]])
 for c in reversed(poly_t.coef[:-1]):
     result = result * x_as_t + c
 coefs = result.coef
+
+# 2^0 must be exactly 1 (db_to_gain(0) = 1, pow(x, 0) = 1). If c_0 doesn't round to 1 in f32,
+# pin it: 2^x = 1 + x Q(x), Q a Remez fit of (2^x - 1) / x weighted by x / 2^x (2^x's relative
+# error; the small floor keeps the weight nonzero at 0).
+if np.float32(coefs[0]) != 1:
+    def quotient(x):
+        safe = np.where(x == 0, 1.0, x)
+        return np.where(x == 0, np.log(2), np.expm1(safe * np.log(2)) / safe)
+    q, _, _ = remez(quotient, lambda x: (x + 1e-3) / np.exp2(x), A, B, DEGREE, grid_size=40001)
+    coefs = np.concatenate([[1.0], q])
+    print("\nc_0 pinned to 1 (Remez fit of (2^x - 1) / x)")
 
 print(f"\nMonomial coefficients c_k of exp2(x) ~ sum c_k * x^k on [{A}, {B}]:")
 for k, c in enumerate(coefs):

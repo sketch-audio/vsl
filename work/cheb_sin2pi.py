@@ -11,6 +11,8 @@ Fit f via Chebyshev in t = 2x in [-1, 1], convert to monomials in x^2,
 recover sin(2*pi*x) by the factored form.
 """
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import Chebyshev, Polynomial
@@ -54,7 +56,7 @@ def f(x):
     return out
 
 
-DEGREE = 12
+DEGREE = int(sys.argv[1]) if len(sys.argv) > 1 else 12  # Precision::Fast: 10
 cheb = Chebyshev.interpolate(lambda t: f(HALF * t), DEGREE, domain=[-1, 1])
 print("Chebyshev coefficients of f((1/2)*t):")
 for n, c in enumerate(cheb.coef):

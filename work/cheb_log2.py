@@ -11,6 +11,8 @@ Intended for range-reduced log2 where the caller decomposes x = 2^e * m with
 m in [1, 2) and computes log2(x) = e + log2(m).
 """
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import Chebyshev, Polynomial
@@ -139,7 +141,7 @@ A2, B2 = -0.25, 0.5
 MID2 = (A2 + B2) / 2    # 0.125
 HALF2 = (B2 - A2) / 2   # 0.375
 
-DEGREE2 = 8
+DEGREE2 = int(sys.argv[1]) if len(sys.argv) > 1 else 8  # Precision::Fast: 6
 cheb2 = Chebyshev.interpolate(lambda t: g(MID2 + HALF2 * t), DEGREE2, domain=[-1, 1])
 print("\n\n=== [0.75, 1.5) reduction ===")
 print("Chebyshev coefficients of G(0.125 + 0.375*t):")

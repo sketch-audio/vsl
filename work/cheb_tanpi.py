@@ -21,6 +21,8 @@ poles sit at x = +/- 1/2, which is EXACT in f32. So the denominator factors
 split is needed, and the wrap into range is the cheap x - round(x).
 """
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import Chebyshev, Polynomial
@@ -68,7 +70,7 @@ def g(x):
 # Fit g on [-1/2, 1/2] via Chebyshev interpolation in t = 2x. DEGREE=8 (5 even
 # coeffs) matches the sibling cheb_tan.py cost and already beats it; DEGREE=10
 # (6 coeffs) trims the near-pole max from ~4.0 to ~3.2 ULP for one extra fma.
-DEGREE = 8
+DEGREE = int(sys.argv[1]) if len(sys.argv) > 1 else 8  # Precision::Fast: 4
 cheb = Chebyshev.interpolate(lambda t: g(HALF * t), DEGREE, domain=[-1, 1])
 
 print("Chebyshev coefficients a_n of g((1/2)*t) = sum a_n T_n(t):")

@@ -1,5 +1,7 @@
 """tanh(x) Chebyshev approximation on [-L, L] with L = 1.
 
+Exploration only: vsl::tanh's coefficients (both precisions) come from remez_tanh.py.
+
 tanh is odd, analytic on R with nearest poles at +/- i*pi/2. Factor out the
 zero at origin: tanh(x)/x is smooth and EVEN, with value 1 at x=0 and
 tanh(1) ~ 0.7616 at the endpoints.
